@@ -1,0 +1,65 @@
+-- to-do-app database setup
+
+CREATE DATABASE todo_app;
+
+-- user table 
+CREATE TABLE users (
+    user_id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(150) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL
+);
+
+--categories table
+CREATE TABLE categories (
+    category_id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    category_name VARCHAR(100) NOT NULL,
+
+    CONSTRAINT fk_category_user
+    FOREIGN KEY (user_id)
+    REFERENCES users(user_id)
+    ON DELETE CASCADE,
+
+    CONSTRAINT unique_user_category
+    UNIQUE (user_id, category_name),
+
+    CONSTRAINT unique_category_owner
+    UNIQUE (category_id, user_id)
+);
+
+-- task table
+CREATE TABLE tasks (
+    task_id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    category_id INT,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    priority VARCHAR(20) NOT NULL DEFAULT 'medium',
+    due_date DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_task_user
+    FOREIGN KEY (user_id)
+    REFERENCES users(user_id)
+    ON DELETE CASCADE,
+
+    CONSTRAINT fk_task_category
+    FOREIGN KEY (category_id, user_id)
+    REFERENCES categories(category_id, user_id)
+    ON DELETE SET NULL (category_id),
+
+    CONSTRAINT check_task_status
+    CHECK (status IN ('pending', 'in_progress', 'completed')),
+
+    CONSTRAINT check_task_priority
+    CHECK (priority IN ('low', 'medium', 'high'))
+);
+
+
+-- to check whether all tables are created 
+SELECT table_name
+FROM information_schema.tables
+WHERE table_schema = 'public'
+AND table_type = 'BASE TABLE';
