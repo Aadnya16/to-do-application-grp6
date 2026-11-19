@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskFlow — Sign In</title>
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+  <div class="auth-wrapper">
+    <div class="auth-card">
+      <!-- App Header & Logo -->
+      <div class="auth-header">
+        <div class="auth-logo-badge">✓</div>
+        <h1 class="auth-title">TaskFlow</h1>
+        <p class="auth-subtitle" id="authSubtitle">Welcome back! Please enter your details.</p>
+      </div>
+
+      <!-- Tab Switcher (Login / Register) -->
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab-btn active" id="loginTabBtn">Sign In</button>
+        <button type="button" class="auth-tab-btn" id="registerTabBtn">Create Account</button>
+      </div>
+
+      <!-- 1. LOGIN FORM -->
+      <form id="loginForm" novalidate>
+        <!-- Email Input -->
+        <div class="form-group">
+          <label for="loginEmail">Email Address</label>
+          <input 
+            type="email" 
+            id="loginEmail" 
+            class="form-control" 
+            placeholder="vrunda.dilip@taskflow.dev" 
+            autocomplete="email"
+            required
+          >
+          <div class="error-msg" id="loginEmailError"></div>
+        </div>
+
+        <!-- Password Input -->
+        <div class="form-group">
+          <label for="loginPassword">Password</label>
+          <div class="password-wrapper">
+            <input 
+              type="password" 
+              id="loginPassword" 
+              class="form-control" 
+              placeholder="••••••••" 
+              autocomplete="current-password"
+              required
+            >
+            <button 
+              type="button" 
+              class="password-toggle-btn" 
+              data-target="loginPassword" 
+              aria-label="Toggle password visibility"
+              title="Show / hide password"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+          </div>
+          <div class="error-msg" id="loginPasswordError"></div>
+        </div>
+
+        <!-- Remember Me & Forgot Password -->
+        <div class="auth-options">
+          <label class="remember-label">
+            <input type="checkbox" id="rememberMe" checked>
+            <span>Remember me</span>
+          </label>
+          <a href="#" class="auth-link" onclick="alert('Password reset link will be sent to your email.'); return false;">Forgot password?</a>
+        </div>
+
+        <!-- Login Button -->
+        <button type="submit" class="btn btn-primary btn-block" id="loginSubmitBtn">
+          Sign In to TaskFlow
+        </button>
+
+        <div class="auth-switch">
+          Don't have an account? <a href="#" id="switchToRegister">Register now</a>
+        </div>
+      </form>
+
+      <!-- 2. REGISTER FORM -->
+      <form id="registerForm" style="display: none;" novalidate>
+        <div class="form-group">
+          <label for="regName">Full Name</label>
+          <input 
+            type="text" 
+            id="regName" 
+            class="form-control" 
+            placeholder="e.g. Vrunda Dilip" 
+            required
+          >
+          <div class="error-msg" id="regNameError"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="regEmail">Email Address</label>
+          <input 
+            type="email" 
+            id="regEmail" 
+            class="form-control" 
+            placeholder="name@company.com" 
+            autocomplete="email"
+            required
+          >
+          <div class="error-msg" id="regEmailError"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="regPassword">Password</label>
+          <div class="password-wrapper">
+            <input 
+              type="password" 
+              id="regPassword" 
+              class="form-control" 
+              placeholder="Minimum 6 characters" 
+              autocomplete="new-password"
+              required
+            >
+            <button 
+              type="button" 
+              class="password-toggle-btn" 
+              data-target="regPassword" 
+              aria-label="Toggle password visibility"
+              title="Show / hide password"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+          </div>
+          <div class="error-msg" id="regPasswordError"></div>
+        </div>
+
+        <!-- Register Button -->
+        <button type="submit" class="btn btn-primary btn-block">
+          Create Free Account
+        </button>
+
+        <div class="auth-switch">
+          Already have an account? <a href="#" id="switchToLogin">Sign In</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Scripts -->
+  <script src="js/mock-data.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>
