@@ -1,14 +1,53 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0; url=login.html">
-  <title>TaskFlow — Redirecting</title>
-  <script>
-    window.location.href = "login.html";
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskFlow</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/auth.css">
+  <style>
+    .choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:28px}
+    .choice-card{display:block;text-decoration:none;padding:22px;border:1px solid #e2e8f0;border-radius:16px;background:#fff;color:#172033;transition:.2s}
+    .choice-card:hover{border-color:#4f46e5;transform:translateY(-2px)}
+    .choice-card strong{display:block;font-size:17px;margin:10px 0 5px}
+    .choice-card span{color:#64748b;font-size:13px}
+    .choice-icon{font-size:25px}
+    @media(max-width:480px){.choice-grid{grid-template-columns:1fr}}
+  </style>
 </head>
-<body style="font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #F8FAFC; color: #64748B;">
-  <p>Loading TaskFlow... If you are not redirected automatically, <a href="login.html" style="color: #2563EB;">click here to continue</a>.</p>
+<body>
+  <main class="auth-wrapper">
+    <section class="auth-card">
+      <header class="auth-header">
+        <div class="auth-logo-badge">✓</div>
+        <h1 class="auth-title">TaskFlow</h1>
+        <p class="auth-subtitle">Organise your work. Make progress every day.</p>
+      </header>
+      <div class="choice-grid">
+        <a class="choice-card" href="login.html?mode=user-login">
+          <span class="choice-icon">👤</span>
+          <strong>User Login</strong>
+          <span>Continue to your tasks</span>
+        </a>
+        <a class="choice-card" href="login.html?mode=user-signup">
+          <span class="choice-icon">✍️</span>
+          <strong>User Sign Up</strong>
+          <span>Create your account</span>
+        </a>
+        <a class="choice-card" href="login.html?mode=admin-login">
+          <span class="choice-icon">🛡️</span>
+          <strong>Admin Login</strong>
+          <span>For approved administrators</span>
+        </a>
+        <a class="choice-card" href="login.html?mode=admin-signup">
+          <span class="choice-icon">＋</span>
+          <strong>Admin Sign Up</strong>
+          <span>Request administrator access</span>
+        </a>
+      </div>
+    </section>
+  </main>
 </body>
 </html>

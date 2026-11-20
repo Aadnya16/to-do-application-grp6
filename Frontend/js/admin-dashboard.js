@@ -1,313 +1,247 @@
 
 document.addEventListener("DOMContentLoaded", () => {
-    "use strict";
+  "use strict";
 
-    const $ = id => document.getElementById(id);
+  const $ = id => document.getElementById(id);
 
-    // Read local demo data
-    const read = key => {
-        try {
-            return JSON.parse(localStorage.getItem(key) || "[]");
-        } catch (error) {
-            console.error(`Could not read ${key}:`, error);
-            return [];
-        }
-    };
-
-    // Save local demo data
-    const save = (key, data) => {
-        localStorage.setItem(key, JSON.stringify(data));
-    };
-
-    // Prevent HTML injection
-    const escapeHTML = value =>
-        String(value ?? "").replace(/[&<>"']/g, char => ({
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            '"': "&quot;",
-            "'": "&#39;"
-        })[char]);
-
-    // Check admin session
-    let session = null;
-
+  const read = key => {
     try {
-        session = JSON.parse(
-            sessionStorage.getItem("taskflow_session") || "null"
-        );
+      const value = JSON.parse(localStorage.getItem(key) || "[]");
+      return Array.isArray(value) ? value : [];
     } catch {
-        session = null;
+      return [];
     }
+  };
 
-    if (!session || session.role !== "admin") {
-        location.replace("index.html");
-        return;
-    }
+  const save = (key, value) =>
+    localStorage.setItem(key, JSON.stringify(value));
 
-    if ($("adminName")) {
-        $("adminName").textContent = session.name || "Administrator";
-    }
+  const escapeHTML = value =>
+    String(value ?? "").replace(/[&<>"']/g, char => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    })[char]);
 
-    // Render dashboard
-    function renderDashboard() {
-        const allUsers = read("taskflow_users");
+  let session;
 
-        const users = allUsers.filter(user =>
-            user.role === "user" && user.status === "active"
-        );
+  try {
+    session = JSON.parse(
+      sessionStorage.getItem("taskflow_session") || "null"
+    );
+  } catch {
+    session = null;
+  }
 
-        const requests = allUsers.filter(user =>
-            user.role === "pending_admin" && user.status === "pending"
-        );
+  if (!session || session.role !== "admin") {
+    location.replace("login.html?mode=admin-login");
+    return;
+  }
 
-        const tasks = read("taskflow_tasks");
+  if ($("adminName")) {
+    $("adminName").textContent = session.name || "Administrator";
+  }
 
-        // Task statistics
-        const pending = tasks.filter(
-            task => task.status === "pending"
-        ).length;
+  function render() {
+    const allUsers = read("taskflow_users");
 
-        const inProgress = tasks.filter(
-            task => task.status === "in_progress"
-        ).length;
+    const users = allUsers.filter(user =>
+      user.role === "user" && user.status === "active"
+    );
 
-        const completed = tasks.filter(
+    const requests = allUsers.filter(user =>
+      user.role === "pending_admin" && user.status === "pending"
+    );
+
+    const tasks = read("taskflow_tasks");
+
+    const pending = tasks.filter(
+      task => task.status === "pending"
+    ).length;
+
+    const inProgress = tasks.filter(
+      task => task.status === "in_progress"
+    ).length;
+
+    const completed = tasks.filter(
+      task => task.status === "completed"
+    ).length;
+
+    const total = tasks.length;
+
+    const rate = total
+      ? Math.round(completed / total * 100)
+      : 0;
+
+    $("totalUsers").textContent = users.length;
+    $("totalTasks").textContent = total;
+    $("pendingTasks").textContent = pending;
+    $("inProgressTasks").textContent = inProgress;
+    $("completedTasks").textContent = completed;
+
+    $("overallProgressText").textContent = `${rate}%`;
+    $("overallProgressBar").style.width = `${rate}%`;
+
+    // Registered users
+    const usersBody = $("usersTableBody");
+
+    usersBody.innerHTML = users.length
+      ? users.map(user => {
+          const ownTasks = tasks.filter(task =>
+            (task.ownerEmail || "").toLowerCase() ===
+            user.email.toLowerCase()
+          );
+
+          const done = ownTasks.filter(
             task => task.status === "completed"
-        ).length;
+          ).length;
 
-        const total = tasks.length;
-
-        const progress = total
-            ? Math.round((completed / total) * 100)
+          const percent = ownTasks.length
+            ? Math.round(done / ownTasks.length * 100)
             : 0;
 
-        // Update statistics
-        $("totalUsers").textContent = users.length;
-        $("totalTasks").textContent = total;
-        $("pendingTasks").textContent = pending;
-        $("inProgressTasks").textContent = inProgress;
-        $("completedTasks").textContent = completed;
+          return `
+            <tr>
+              <td>${escapeHTML(user.name)}</td>
+              <td>${escapeHTML(user.email)}</td>
+              <td>${ownTasks.length}</td>
+              <td>${done}</td>
+              <td>${percent}%</td>
+            </tr>
+          `;
+        }).join("")
+      : '<tr><td colspan="5">No registered users found.</td></tr>';
 
-        $("overallProgressText").textContent = `${progress}%`;
-        $("overallProgressBar").style.width = `${progress}%`;
+    // Pending admin requests
+    const requestsBody = $("adminRequestsTableBody");
 
-        // Registered users table
-        const usersBody = $("usersTableBody");
-        usersBody.replaceChildren();
+    requestsBody.innerHTML = requests.length
+      ? requests.map(request => `
+          <tr>
+            <td>${escapeHTML(request.name)}</td>
+            <td>${escapeHTML(request.email)}</td>
+            <td>
+              ${request.createdAt
+                ? escapeHTML(new Date(request.createdAt).toLocaleDateString())
+                : "—"}
+            </td>
+            <td class="request-actions">
+              <button
+                type="button"
+                class="btn btn-primary btn-sm"
+                data-action="approve"
+                data-id="${escapeHTML(request.id)}"
+              >Approve</button>
 
-        if (!users.length) {
-            usersBody.innerHTML =
-                '<tr><td colspan="5">No registered users found.</td></tr>';
-        } else {
-            users.forEach(user => {
-                const userTasks = tasks.filter(task =>
-                    task.ownerEmail?.toLowerCase() ===
-                    user.email?.toLowerCase()
-                );
+              <button
+                type="button"
+                class="btn btn-danger btn-sm"
+                data-action="reject"
+                data-id="${escapeHTML(request.id)}"
+              >Reject</button>
+            </td>
+          </tr>
+        `).join("")
+      : '<tr><td colspan="4">No pending requests.</td></tr>';
 
-                const userCompleted = userTasks.filter(
-                    task => task.status === "completed"
-                ).length;
+    // All tasks
+    const tasksBody = $("adminTasksTableBody");
 
-                const userProgress = userTasks.length
-                    ? Math.round(
-                        (userCompleted / userTasks.length) * 100
-                    )
-                    : 0;
+    tasksBody.innerHTML = tasks.length
+      ? tasks.map(task => {
+          const owner = users.find(user =>
+            user.email.toLowerCase() ===
+            (task.ownerEmail || "").toLowerCase()
+          );
 
-                const row = document.createElement("tr");
+          return `
+            <tr>
+              <td>${escapeHTML(task.title)}</td>
+              <td>${escapeHTML(owner?.name || task.ownerEmail || "Unknown")}</td>
+              <td>${escapeHTML(task.priority || "medium")}</td>
+              <td>${escapeHTML(task.dueDate || "—")}</td>
+              <td>${escapeHTML((task.status || "pending").replaceAll("_", " "))}</td>
+            </tr>
+          `;
+        }).join("")
+      : '<tr><td colspan="5">No tasks found.</td></tr>';
+  }
 
-                row.innerHTML = `
-                    <td>${escapeHTML(user.name)}</td>
-                    <td>${escapeHTML(user.email)}</td>
-                    <td>${userTasks.length}</td>
-                    <td>${userCompleted}</td>
-                    <td>${userProgress}%</td>
-                `;
+  // Approve / reject requests
+  $("adminRequestsTableBody").addEventListener("click", event => {
+    const button = event.target.closest("button[data-action]");
 
-                usersBody.appendChild(row);
-            });
-        }
+    if (!button) return;
 
-        // Pending admin requests table
-        const requestsBody = $("adminRequestsTableBody");
+    const users = read("taskflow_users");
 
-        if (requestsBody) {
-            requestsBody.replaceChildren();
+    const target = users.find(user =>
+      String(user.id) === button.dataset.id &&
+      user.role === "pending_admin" &&
+      user.status === "pending"
+    );
 
-            if (!requests.length) {
-                requestsBody.innerHTML =
-                    '<tr><td colspan="4">No pending requests.</td></tr>';
-            } else {
-                requests.forEach(request => {
-                    const row = document.createElement("tr");
-
-                    const requestedDate = request.createdAt
-                        ? new Date(request.createdAt).toLocaleDateString()
-                        : "—";
-
-                    row.innerHTML = `
-                        <td>${escapeHTML(request.name)}</td>
-                        <td>${escapeHTML(request.email)}</td>
-                        <td>${escapeHTML(requestedDate)}</td>
-                        <td>
-                            <button
-                                type="button"
-                                data-action="approve"
-                                data-id="${escapeHTML(request.id)}"
-                            >
-                                Approve
-                            </button>
-
-                            <button
-                                type="button"
-                                data-action="reject"
-                                data-id="${escapeHTML(request.id)}"
-                            >
-                                Reject
-                            </button>
-                        </td>
-                    `;
-
-                    requestsBody.appendChild(row);
-                });
-            }
-        }
-
-        // All tasks table
-        const tasksBody = $("adminTasksTableBody");
-        tasksBody.replaceChildren();
-
-        if (!tasks.length) {
-            tasksBody.innerHTML =
-                '<tr><td colspan="5">No tasks found.</td></tr>';
-        } else {
-            tasks.forEach(task => {
-                const owner = users.find(user =>
-                    user.email?.toLowerCase() ===
-                    task.ownerEmail?.toLowerCase()
-                );
-
-                const row = document.createElement("tr");
-
-                row.innerHTML = `
-                    <td>${escapeHTML(task.title)}</td>
-                    <td>${escapeHTML(
-                        owner?.name || task.ownerEmail || "Unknown"
-                    )}</td>
-                    <td>${escapeHTML(task.priority || "Medium")}</td>
-                    <td>${escapeHTML(task.dueDate || "—")}</td>
-                    <td>${escapeHTML(
-                        (task.status || "pending").replace("_", " ")
-                    )}</td>
-                `;
-
-                tasksBody.appendChild(row);
-            });
-        }
+    if (!target) {
+      alert("This request is no longer pending.");
+      render();
+      return;
     }
 
-    // Approve or reject admin requests
-    $("adminRequestsTableBody")?.addEventListener("click", event => {
-        const button = event.target.closest("button[data-action]");
+    const approve = button.dataset.action === "approve";
 
-        if (!button) return;
+    const confirmed = confirm(
+      `${approve ? "Approve" : "Reject"} admin access for ${target.name}?`
+    );
 
-        const id = button.dataset.id;
-        const action = button.dataset.action;
+    if (!confirmed) return;
 
-        const users = read("taskflow_users");
+    target.role = approve ? "admin" : "rejected_admin";
+    target.status = approve ? "active" : "rejected";
 
-        const request = users.find(user =>
-            String(user.id) === String(id) &&
-            user.role === "pending_admin" &&
-            user.status === "pending"
-        );
+    target[approve ? "approvedAt" : "rejectedAt"] =
+      new Date().toISOString();
 
-        if (!request) {
-            alert("This request is no longer available.");
-            renderDashboard();
-            return;
-        }
+    target[approve ? "approvedBy" : "rejectedBy"] =
+      session.email;
 
-        if (action === "approve") {
-            const confirmed = confirm(
-                `Approve admin access for ${request.name}?`
-            );
+    save("taskflow_users", users);
 
-            if (!confirmed) return;
+    alert(
+      approve
+        ? "Admin request approved."
+        : "Admin request rejected."
+    );
 
-            request.role = "admin";
-            request.status = "active";
-            request.approvedAt = new Date().toISOString();
-            request.approvedBy = session.email;
+    render();
+  });
 
-            save("taskflow_users", users);
+  // Logout
+  $("logoutBtn")?.addEventListener("click", () => {
+    sessionStorage.removeItem("taskflow_session");
+    location.href = "index.html";
+  });
 
-            alert("Admin request approved successfully.");
-        }
+  // Mobile sidebar
+  $("menuToggle")?.addEventListener("click", () => {
+    $("sidebar")?.classList.toggle("open");
+    $("sidebarOverlay")?.classList.toggle("active");
+  });
 
-        if (action === "reject") {
-            const confirmed = confirm(
-                `Reject the admin request from ${request.name}?`
-            );
+  $("sidebarOverlay")?.addEventListener("click", () => {
+    $("sidebar")?.classList.remove("open");
+    $("sidebarOverlay")?.classList.remove("active");
+  });
 
-            if (!confirmed) return;
+  render();
 
-            request.role = "rejected_admin";
-            request.status = "rejected";
-            request.rejectedAt = new Date().toISOString();
-            request.rejectedBy = session.email;
-
-            save("taskflow_users", users);
-
-            alert("Admin request rejected.");
-        }
-
-        renderDashboard();
-    });
-
-    // Initial dashboard load
-    renderDashboard();
-
-    // Refresh when local storage changes in another tab
-    window.addEventListener("storage", event => {
-        if (
-            event.key === "taskflow_users" ||
-            event.key === "taskflow_tasks"
-        ) {
-            renderDashboard();
-        }
-    });
-
-    // Refresh dashboard periodically
-    const refreshInterval = setInterval(renderDashboard, 3000);
-
-    // Mobile sidebar
-    const sidebar = $("sidebar");
-    const overlay = $("sidebarOverlay");
-
-    $("menuToggle")?.addEventListener("click", () => {
-        sidebar?.classList.toggle("open");
-        overlay?.classList.toggle("active");
-    });
-
-    overlay?.addEventListener("click", () => {
-        sidebar?.classList.remove("open");
-        overlay?.classList.remove("active");
-    });
-
-    // Logout
-    $("logoutBtn")?.addEventListener("click", () => {
-        sessionStorage.removeItem("taskflow_session");
-        sessionStorage.removeItem("taskflow_auth");
-
-        location.href = "login.html";
-    });
-
-    // Cleanup
-    window.addEventListener("pagehide", () => {
-        clearInterval(refreshInterval);
-    });
+  window.addEventListener("storage", event => {
+    if (
+      event.key === "taskflow_users" ||
+      event.key === "taskflow_tasks"
+    ) {
+      render();
+    }
+  });
 });
