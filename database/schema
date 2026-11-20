@@ -1,6 +1,6 @@
--- to-do-app database setup
+-- todo_app database setup
 
-CREATE DATABASE todo_app;
+CREATE DATABASE to-do-app;
 
 -- user table 
 CREATE TABLE users (
@@ -9,6 +9,11 @@ CREATE TABLE users (
     email VARCHAR(150) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL
 );
+
+ALTER TABLE users
+ADD COLUMN role VARCHAR(20) NOT NULL;
+
+
 
 --categories table
 CREATE TABLE categories (
