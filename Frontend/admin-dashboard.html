@@ -2,229 +2,252 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow — Admin Dashboard</title>
 
-  <title>TaskFlow — Admin Dashboard</title>
-
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/admin-dashboard.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/task.css">
+    <link rel="stylesheet" href="css/admin-dashboard.css">
 </head>
 
 <body>
-  <div class="app-layout">
+<div class="app-layout">
 
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-
-      <div class="sidebar-logo">
-        <div class="logo-icon">✓</div>
-        <div class="logo-text">TaskFlow</div>
-      </div>
-
-      <nav class="sidebar-nav" aria-label="Admin navigation">
-        <div class="nav-label">ADMINISTRATION</div>
-
-        <a href="admin-dashboard.html"
-           class="nav-item active"
-           aria-current="page">
-          <span class="nav-icon">📊</span>
-          <span>Overview</span>
-        </a>
-      </nav>
-
-      <div class="sidebar-footer">
-        <div class="user-info">
-          <div class="user-avatar">AD</div>
-
-          <div>
-            <div class="user-name">Administrator</div>
-            <div class="user-role">Admin</div>
-          </div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <span class="brand-icon">✓</span>
+            <span>TaskFlow</span>
+            <span class="admin-badge">ADMIN</span>
         </div>
-      </div>
 
+        <nav class="sidebar-nav">
+            <a href="admin-dashboard.html" class="nav-link active">
+                <span>▦</span> Dashboard
+            </a>
+
+            <a href="#usersSection" class="nav-link">
+                <span>👥</span> Registered Users
+            </a>
+
+            <a href="#adminRequestsSection" class="nav-link">
+                <span>⏳</span> Admin Requests
+            </a>
+
+            <a href="#tasksSection" class="nav-link">
+                <span>☑</span> All Tasks
+            </a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <button type="button" class="nav-link logout-btn" id="logoutBtn">
+                <span>↪</span> Logout
+            </button>
+        </div>
     </aside>
 
-    <!-- MAIN CONTENT -->
-    <div class="main-content">
+    <main class="main-content">
 
-      <!-- TOPBAR -->
-      <header class="topbar">
+        <header class="topbar">
+            <div class="topbar-left">
+                <button
+                    class="hamburger"
+                    id="menuToggle"
+                    aria-label="Toggle navigation"
+                >☰</button>
 
-        <div class="topbar-left">
-          <h1 class="page-title">Admin Dashboard</h1>
-        </div>
+                <div>
+                    <h1 class="page-title">Admin Dashboard</h1>
+                    <p class="page-subtitle">Monitor users and task progress</p>
+                </div>
+            </div>
 
-        <div class="topbar-right">
+            <div class="topbar-right">
+                <div class="admin-profile">
+                    <span class="avatar">A</span>
+                    <span id="adminName">Administrator</span>
+                </div>
+            </div>
+        </header>
 
-          <span class="admin-status">
-            <span class="status-dot"></span>
-            Admin overview
-          </span>
+        <section class="admin-dashboard">
 
-          <a href="login.html" class="logout-btn">
-            ↪ <span>Logout</span>
-          </a>
+            <div class="admin-welcome">
+                <div>
+                    <h2>Welcome, Admin!</h2>
+                    <p>Here's an overview of your TaskFlow platform.</p>
+                </div>
+            </div>
 
-        </div>
-      </header>
+            <!-- Overview statistics -->
+            <div class="stats-grid">
 
-      <!-- DASHBOARD CONTENT -->
-      <main class="page-content">
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <p>Registered Users</p>
+                        <h2 id="totalUsers">0</h2>
+                    </div>
+                    <div class="stat-icon">👥</div>
+                </div>
 
-        <!-- WELCOME SECTION -->
-        <section class="admin-welcome">
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <p>Total Tasks</p>
+                        <h2 id="totalTasks">0</h2>
+                    </div>
+                    <div class="stat-icon">📋</div>
+                </div>
 
-          <div>
-            <p class="eyebrow">TASKFLOW ADMINISTRATION</p>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <p>Pending Tasks</p>
+                        <h2 id="pendingTasks">0</h2>
+                    </div>
+                    <div class="stat-icon">⏳</div>
+                </div>
 
-            <h2>System Overview</h2>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <p>In Progress</p>
+                        <h2 id="inProgressTasks">0</h2>
+                    </div>
+                    <div class="stat-icon">⚡</div>
+                </div>
 
-            <p>
-              Monitor users, tasks and task progress
-              across the application.
-            </p>
-          </div>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <p>Completed Tasks</p>
+                        <h2 id="completedTasks">0</h2>
+                    </div>
+                    <div class="stat-icon">✅</div>
+                </div>
 
-          <div class="admin-welcome-icon" aria-hidden="true">
-            ▦
-          </div>
+            </div>
+
+            <!-- Overall progress -->
+            <section class="admin-section">
+                <div class="section-heading">
+                    <div>
+                        <h2>Overall Task Progress</h2>
+                        <p>Completion rate across all registered users</p>
+                    </div>
+
+                    <span id="overallProgressText">0%</span>
+                </div>
+
+                <div class="progress-track">
+                    <div
+                        class="progress-fill"
+                        id="overallProgressBar"
+                        style="width: 0%;"
+                    ></div>
+                </div>
+            </section>
+
+            <!-- Registered users -->
+            <section class="admin-section" id="usersSection">
+
+                <div class="section-heading">
+                    <div>
+                        <h2>Registered Users</h2>
+                        <p>View individual user activity and progress</p>
+                    </div>
+                </div>
+
+                <div class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Email</th>
+                                <th>Total Tasks</th>
+                                <th>Completed</th>
+                                <th>Progress</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="usersTableBody">
+                            <tr>
+                                <td colspan="5">No registered users found.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </section>
+
+            <!-- Pending admin requests -->
+            <section class="admin-section" id="adminRequestsSection">
+
+                <div class="section-heading">
+                    <div>
+                        <h2>Pending Admin Requests</h2>
+                        <p>Review administrator registration requests</p>
+                    </div>
+                </div>
+
+                <div class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Requested On</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="adminRequestsTableBody">
+                            <tr>
+                                <td colspan="4">No pending requests.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </section>
+
+            <!-- All user tasks -->
+            <section class="admin-section" id="tasksSection">
+
+                <div class="section-heading">
+                    <div>
+                        <h2>All Tasks</h2>
+                        <p>Monitor tasks created by registered users</p>
+                    </div>
+                </div>
+
+                <div class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Task</th>
+                                <th>Assigned User</th>
+                                <th>Priority</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="adminTasksTableBody">
+                            <tr>
+                                <td colspan="5">No tasks found.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </section>
 
         </section>
+    </main>
+</div>
 
-        <!-- STATISTICS -->
-        <section class="admin-stats" aria-label="System statistics">
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+<div class="toast-container" id="toastContainer"></div>
 
-          <article class="admin-stat-card">
-            <div class="admin-stat-top">
-              <span>Total Users</span>
-              <span class="stat-symbol blue" aria-hidden="true">♙</span>
-            </div>
+<script src="js/app.js"></script>
+<script src="js/admin-dashboard.js"></script>
 
-            <strong class="admin-stat-value" id="totalUsers">—</strong>
-            <small>Registered accounts</small>
-          </article>
-
-          <article class="admin-stat-card">
-            <div class="admin-stat-top">
-              <span>Total Tasks</span>
-              <span class="stat-symbol blue" aria-hidden="true">▤</span>
-            </div>
-
-            <strong class="admin-stat-value" id="totalTasks">—</strong>
-            <small>Tasks in the system</small>
-          </article>
-
-          <article class="admin-stat-card">
-            <div class="admin-stat-top">
-              <span>Pending Tasks</span>
-              <span class="stat-symbol amber" aria-hidden="true">◷</span>
-            </div>
-
-            <strong class="admin-stat-value" id="pendingTasks">—</strong>
-            <small>Awaiting completion</small>
-          </article>
-
-          <article class="admin-stat-card">
-            <div class="admin-stat-top">
-              <span>In Progress</span>
-              <span class="stat-symbol blue" aria-hidden="true">↻</span>
-            </div>
-
-            <strong class="admin-stat-value" id="inProgressTasks">—</strong>
-            <small>Currently being worked on</small>
-          </article>
-
-          <article class="admin-stat-card">
-            <div class="admin-stat-top">
-              <span>Completed Tasks</span>
-              <span class="stat-symbol green" aria-hidden="true">✓</span>
-            </div>
-
-            <strong class="admin-stat-value" id="completedTasks">—</strong>
-            <small>Successfully completed</small>
-          </article>
-
-        </section>
-
-        <!-- TASK STATUS SUMMARY -->
-        <section class="admin-panel">
-
-          <div class="panel-heading">
-            <div>
-              <h2>Task Status Summary</h2>
-              <p>Breakdown of tasks by their current status.</p>
-            </div>
-          </div>
-
-          <div class="status-summary">
-
-            <div class="status-row">
-              <div class="status-name">
-                <span class="legend-dot pending-dot"></span>
-                Pending
-              </div>
-
-              <div class="status-track"
-                   role="progressbar"
-                   aria-label="Pending tasks"
-                   aria-valuemin="0"
-                   aria-valuemax="100"
-                   aria-valuenow="0">
-                <div class="status-fill pending-fill" id="pendingBar"></div>
-              </div>
-
-              <strong id="pendingPercent">—</strong>
-            </div>
-
-            <div class="status-row">
-              <div class="status-name">
-                <span class="legend-dot progress-dot"></span>
-                In Progress
-              </div>
-
-              <div class="status-track"
-                   role="progressbar"
-                   aria-label="Tasks in progress"
-                   aria-valuemin="0"
-                   aria-valuemax="100"
-                   aria-valuenow="0">
-                <div class="status-fill progress-fill" id="progressBar"></div>
-              </div>
-
-              <strong id="progressPercent">—</strong>
-            </div>
-
-            <div class="status-row">
-              <div class="status-name">
-                <span class="legend-dot completed-dot"></span>
-                Completed
-              </div>
-
-              <div class="status-track"
-                   role="progressbar"
-                   aria-label="Completed tasks"
-                   aria-valuemin="0"
-                   aria-valuemax="100"
-                   aria-valuenow="0">
-                <div class="status-fill completed-fill" id="completedBar"></div>
-              </div>
-
-              <strong id="completedPercent">—</strong>
-            </div>
-
-          </div>
-
-          <p class="data-note">
-            Statistics will appear here once the dashboard
-            is connected to the backend API.
-          </p>
-
-        </section>
-
-      </main>
-    </div>
-  </div>
 </body>
 </html>

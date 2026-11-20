@@ -1,227 +1,419 @@
 
-(() => {
-  const $ = id => document.getElementById(id);
+document.addEventListener("DOMContentLoaded", () => {
+    "use strict";
 
-  const getUsers = () => {
-    try {
-      return JSON.parse(localStorage.getItem("taskflow_users") || "[]");
-    } catch {
-      return [];
-    }
-  };
+    const $ = id => document.getElementById(id);
 
-  const saveUsers = users => {
-    localStorage.setItem("taskflow_users", JSON.stringify(users));
-  };
+    // Local storage helpers
+    const readUsers = () => {
+        try {
+            return JSON.parse(
+                localStorage.getItem("taskflow_users") || "[]"
+            );
+        } catch {
+            return [];
+        }
+    };
 
-  function showError(id, message) {
-    const element = $(id);
-    if (element) element.textContent = message;
-  }
+    const saveUsers = users => {
+        localStorage.setItem("taskflow_users", JSON.stringify(users));
+    };
 
-  function clearErrors() {
-    [
-      "loginEmailError",
-      "loginPasswordError",
-      "regNameError",
-      "regEmailError",
-      "regPasswordError"
-    ].forEach(id => showError(id, ""));
-  }
+    // Toast notification
+    const showToast = (message, type = "success") => {
+        if (window.TaskFlowApp?.showToast) {
+            window.TaskFlowApp.showToast(message, type);
+        } else {
+            alert(message);
+        }
+    };
 
-  document.addEventListener("DOMContentLoaded", () => {
-    const loginForm = $("loginForm");
-    const registerForm = $("registerForm");
+    // Screen management
+    const screens = [
+        "loginForm",
+        "registerForm",
+        "adminRegisterForm",
+        "pendingScreen",
+        "adminOtpForm"
+    ];
 
-    if (!loginForm || !registerForm) return;
+    const showScreen = screenId => {
+        screens.forEach(id => {
+            const element = $(id);
 
-    const roleInput = $("loginSelectedRole");
+            if (element) {
+                element.style.display =
+                    id === screenId ? "block" : "none";
+            }
+        });
+    };
 
-    function getRole() {
-      return roleInput?.value || "user";
-    }
+    const setTitle = (title, subtitle) => {
+        $("authTitle").textContent = title;
+        $("authSubtitle").textContent = subtitle;
+    };
 
-    function switchForm(showRegister) {
-      loginForm.style.display = showRegister ? "none" : "block";
-      registerForm.style.display = showRegister ? "block" : "none";
+    // Correct email validation
+    const emailOK = email =>
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-      if ($("authTabsContainer")) {
-        $("authTabsContainer").style.display =
-          getRole() === "admin" || showRegister ? "none" : "flex";
-      }
+    const setError = (id, message) => {
+        if ($(id)) {
+            $(id).textContent = message;
+        }
+    };
 
-      clearErrors();
-    }
+    const clearErrors = ids => {
+        ids.forEach(id => setError(id, ""));
+    };
 
-    $("switchToRegister")?.addEventListener("click", event => {
-      event.preventDefault();
-      if (getRole() === "user") switchForm(true);
+    const params = new URLSearchParams(location.search);
+
+    let loginRole = "user";
+
+    // LOGIN SCREEN
+    const openLogin = role => {
+        loginRole = role;
+
+        $("loginSelectedRole").value = role;
+
+        showScreen("loginForm");
+
+        setTitle(
+            role === "admin" ? "TaskFlow Admin" : "TaskFlow",
+            role === "admin"
+                ? "Sign in to your administrator account."
+                : "Welcome back! Sign in to continue."
+        );
+
+        $("loginSwitch").style.display =
+            role === "user" ? "block" : "none";
+
+        $("adminRegisterSwitch").style.display =
+            role === "admin" ? "block" : "none";
+
+        clearErrors([
+            "loginEmailError",
+            "loginPasswordError",
+            "adminOtpError"
+        ]);
+    };
+
+    // USER REGISTRATION SCREEN
+    const openUserSignup = () => {
+        showScreen("registerForm");
+
+        setTitle(
+            "Create Account",
+            "Join TaskFlow today."
+        );
+
+        clearErrors([
+            "regNameError",
+            "regEmailError",
+            "regPasswordError"
+        ]);
+    };
+
+    // ADMIN REGISTRATION SCREEN
+    const openAdminSignup = () => {
+        showScreen("adminRegisterForm");
+
+        setTitle(
+            "Admin Registration",
+            "Request administrator access."
+        );
+    };
+
+    // NAVIGATION EVENTS
+    $("switchToRegister").addEventListener("click", event => {
+        event.preventDefault();
+        openUserSignup();
     });
 
-    $("switchToLogin")?.addEventListener("click", event => {
-      event.preventDefault();
-      switchForm(false);
+    $("switchToLogin").addEventListener("click", event => {
+        event.preventDefault();
+        openLogin("user");
     });
 
-    $("loginTabBtn")?.addEventListener("click", () => switchForm(false));
-    $("registerTabBtn")?.addEventListener("click", () => {
-      if (getRole() === "user") switchForm(true);
+    $("switchToAdminRegister").addEventListener("click", event => {
+        event.preventDefault();
+        openAdminSignup();
     });
 
-    // Demo credentials autofill
-    $("fillDemoBtn")?.addEventListener("click", () => {
-      const admin = getRole() === "admin";
+    $("backToAdminLogin").addEventListener("click", event => {
+        event.preventDefault();
+        openLogin("admin");
+    });
 
-      $("loginEmail").value = admin
-        ? "admin@taskflow.dev"
-        : "vrunda.dilip@taskflow.dev";
-
-      $("loginPassword").value = admin ? "admin123" : "123456";
-      clearErrors();
+    $("pendingBackBtn").addEventListener("click", () => {
+        openLogin("admin");
     });
 
     // LOGIN
-    loginForm.addEventListener("submit", event => {
-      event.preventDefault();
-      clearErrors();
+    $("loginForm").addEventListener("submit", event => {
+        event.preventDefault();
 
-      const email = $("loginEmail").value.trim().toLowerCase();
-      const password = $("loginPassword").value;
-      const role = getRole();
+        clearErrors([
+            "loginEmailError",
+            "loginPasswordError"
+        ]);
 
-      let valid = true;
+        const email = $("loginEmail").value.trim().toLowerCase();
+        const password = $("loginPassword").value;
 
-      if (!email) {
-        showError("loginEmailError", "Email is required.");
-        valid = false;
-      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        showError("loginEmailError", "Enter a valid email address.");
-        valid = false;
-      }
-
-      if (!password) {
-        showError("loginPasswordError", "Password is required.");
-        valid = false;
-      }
-
-      if (!valid) return;
-
-      let user = null;
-
-      if (role === "admin") {
-        if (
-          email === "admin@taskflow.dev" &&
-          password === "admin123"
-        ) {
-          user = {
-            name: "Administrator",
-            email,
-            role: "admin"
-          };
+        if (!emailOK(email)) {
+            setError(
+                "loginEmailError",
+                "Enter a valid email address."
+            );
+            return;
         }
-      } else {
-        user = getUsers().find(
-          u => u.email === email && u.password === password
+
+        if (!password) {
+            setError(
+                "loginPasswordError",
+                "Password is required."
+            );
+            return;
+        }
+
+        const users = readUsers();
+
+        const user = users.find(account =>
+            account.email === email &&
+            account.password === password
         );
 
-        // Demo user
-        if (
-          !user &&
-          email === "vrunda.dilip@taskflow.dev" &&
-          password === "123456"
-        ) {
-          user = {
-            name: "Vrunda Dilip",
-            email,
-            role: "user"
-          };
+        if (!user) {
+            setError(
+                "loginPasswordError",
+                "Invalid email or password."
+            );
+            return;
         }
-      }
 
-      if (!user) {
-        showError("loginPasswordError", "Invalid email or password.");
-        return;
-      }
+        // ADMIN LOGIN
+        if (loginRole === "admin") {
+            if (
+                user.role !== "admin" ||
+                user.status !== "active"
+            ) {
+                setError(
+                    "loginPasswordError",
+                    "Your administrator account is not approved."
+                );
+                return;
+            }
 
-      const session = {
-        name: user.name,
-        email: user.email,
-        role: user.role
-      };
+            sessionStorage.setItem(
+                "taskflow_pending_admin_email",
+                email
+            );
 
-      sessionStorage.setItem(
-        "taskflow_session",
-        JSON.stringify(session)
-      );
+            showScreen("adminOtpForm");
 
-      sessionStorage.setItem(
-        "taskflow_auth",
-        JSON.stringify({
-          isLoggedIn: true,
-          email: user.email,
-          role: user.role
-        })
-      );
+            setTitle(
+                "Admin Verification",
+                "Enter your email verification code."
+            );
 
-      window.location.href =
-        role === "admin" ? "admin-dashboard.html" : "dashboard.html";
+            return;
+        }
+
+        // USER LOGIN
+        if (
+            user.role !== "user" ||
+            user.status !== "active"
+        ) {
+            setError(
+                "loginPasswordError",
+                "This account cannot access the user dashboard."
+            );
+            return;
+        }
+
+        sessionStorage.setItem(
+            "taskflow_session",
+            JSON.stringify({
+                name: user.name,
+                email: user.email,
+                role: "user"
+            })
+        );
+
+        location.href = "dashboard.html";
     });
 
-    // REGISTRATION
-    registerForm.addEventListener("submit", event => {
-      event.preventDefault();
-      clearErrors();
+    // USER REGISTRATION
+    $("registerForm").addEventListener("submit", event => {
+        event.preventDefault();
 
-      const name = $("regName").value.trim();
-      const email = $("regEmail").value.trim().toLowerCase();
-      const password = $("regPassword").value;
+        clearErrors([
+            "regNameError",
+            "regEmailError",
+            "regPasswordError"
+        ]);
 
-      let valid = true;
+        const name = $("regName").value.trim();
+        const email = $("regEmail").value.trim().toLowerCase();
+        const password = $("regPassword").value;
 
-      if (name.length < 2) {
-        showError("regNameError", "Enter your full name.");
-        valid = false;
-      }
+        let invalid = false;
 
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        showError("regEmailError", "Enter a valid email address.");
-        valid = false;
-      }
+        if (name.length < 2) {
+            setError("regNameError", "Enter your full name.");
+            invalid = true;
+        }
 
-      if (password.length < 6) {
-        showError(
-          "regPasswordError",
-          "Password must contain at least 6 characters."
-        );
-        valid = false;
-      }
+        if (!emailOK(email)) {
+            setError("regEmailError", "Enter a valid email address.");
+            invalid = true;
+        }
 
-      if (!valid) return;
+        if (password.length < 6) {
+            setError(
+                "regPasswordError",
+                "Password must contain at least 6 characters."
+            );
+            invalid = true;
+        }
 
-      const users = getUsers();
+        if (invalid) return;
 
-      if (users.some(user => user.email === email)) {
-        showError(
-          "regEmailError",
-          "An account with this email already exists."
-        );
-        return;
-      }
+        const users = readUsers();
 
-      users.push({
-        name,
-        email,
-        password,
-        role: "user"
-      });
+        if (users.some(user => user.email === email)) {
+            setError(
+                "regEmailError",
+                "This email is already registered."
+            );
+            return;
+        }
 
-      saveUsers(users);
+        users.push({
+            id: crypto.randomUUID
+                ? crypto.randomUUID()
+                : String(Date.now()),
+            name,
+            email,
+            password,
+            role: "user",
+            status: "active",
+            createdAt: new Date().toISOString()
+        });
 
-      window.TaskFlowApp?.showToast("Account created. Please sign in.");
+        saveUsers(users);
 
-      switchForm(false);
-      $("loginEmail").value = email;
-      $("loginPassword").value = "";
+        $("registerForm").reset();
+
+        showToast("Account created successfully. Please sign in.");
+
+        openLogin("user");
     });
-  });
-})();
+
+    // ADMIN REGISTRATION REQUEST
+    $("adminRegisterForm").addEventListener("submit", event => {
+        event.preventDefault();
+
+        const name = $("adminRegName").value.trim();
+        const email = $("adminRegEmail").value.trim().toLowerCase();
+        const password = $("adminRegPassword").value;
+
+        if (name.length < 2) {
+            showToast("Enter your full name.", "error");
+            return;
+        }
+
+        if (!emailOK(email)) {
+            showToast("Enter a valid email address.", "error");
+            return;
+        }
+
+        if (password.length < 6) {
+            showToast(
+                "Password must contain at least 6 characters.",
+                "error"
+            );
+            return;
+        }
+
+        const users = readUsers();
+
+        if (users.some(user => user.email === email)) {
+            showToast(
+                "This email is already registered.",
+                "error"
+            );
+            return;
+        }
+
+        users.push({
+            id: crypto.randomUUID
+                ? crypto.randomUUID()
+                : String(Date.now()),
+            name,
+            email,
+            password,
+            role: "pending_admin",
+            status: "pending",
+            createdAt: new Date().toISOString()
+        });
+
+        saveUsers(users);
+
+        sessionStorage.setItem(
+            "taskflow_pending_admin_email",
+            email
+        );
+
+        $("adminRegisterForm").reset();
+
+        showScreen("pendingScreen");
+
+        setTitle(
+            "Request Submitted",
+            "Your administrator request has been submitted."
+        );
+    });
+
+    // ADMIN OTP
+    $("adminOtpForm").addEventListener("submit", event => {
+        event.preventDefault();
+
+        const otp = $("adminOtp").value.trim();
+
+        if (!/^\d{6}$/.test(otp)) {
+            setError(
+                "adminOtpError",
+                "Enter a valid 6-digit code."
+            );
+            return;
+        }
+
+        setError(
+            "adminOtpError",
+            "OTP verification requires backend integration."
+        );
+    });
+
+    // INITIAL SCREEN BASED ON URL
+    const mode = params.get("mode") || "user-login";
+
+    if (mode === "user-signup") {
+        openUserSignup();
+    } else if (mode === "admin-login") {
+        openLogin("admin");
+    } else if (mode === "admin-signup") {
+        openAdminSignup();
+    } else if (mode === "admin-pending") {
+        showScreen("pendingScreen");
+
+        setTitle(
+            "Request Submitted",
+            "Your administrator request is pending approval."
+        );
+    } else {
+        openLogin("user");
+    }
+});

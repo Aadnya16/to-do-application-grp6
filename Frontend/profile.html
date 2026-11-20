@@ -1,0 +1,188 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow — My Profile</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/task.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+
+<body>
+<div class="app-layout">
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <span class="brand-icon">✓</span>
+            <span>TaskFlow</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="dashboard.html" class="nav-link">
+                <span>▦</span> Dashboard
+            </a>
+
+            <a href="task-list.html" class="nav-link">
+                <span>☑</span> My Tasks
+            </a>
+
+            <a href="add-task.html" class="nav-link">
+                <span>＋</span> Add Task
+            </a>
+
+            <a href="profile.html" class="nav-link active">
+                <span>👤</span> My Profile
+            </a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <button type="button" class="nav-link logout-btn" id="logoutBtn">
+                <span>↪</span> Logout
+            </button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="hamburger" id="menuToggle"
+                        aria-label="Toggle navigation">☰</button>
+
+                <div>
+                    <h1 class="page-title">My Profile</h1>
+                    <p class="page-subtitle">Manage your account information</p>
+                </div>
+            </div>
+        </header>
+
+        <section class="profile-page">
+
+            <div class="profile-card">
+
+                <div class="profile-header">
+                    <div class="profile-avatar" id="profileAvatar">U</div>
+
+                    <div>
+                        <h2 id="profileDisplayName">Your Name</h2>
+                        <p id="profileDisplayEmail">your@email.com</p>
+                        <span class="profile-role" id="profileRole">User</span>
+                        <span class="profile-status" id="profileStatus">Active</span>
+                    </div>
+                </div>
+
+                <div class="profile-divider"></div>
+
+                <form id="profileForm" novalidate>
+
+                    <h3>Personal Information</h3>
+                    <p class="form-description">
+                        Update the details associated with your account.
+                    </p>
+
+                    <div class="form-group">
+                        <label for="profileName">Full Name</label>
+                        <input
+                            type="text"
+                            id="profileName"
+                            name="name"
+                            class="form-control"
+                            placeholder="Enter your full name"
+                            maxlength="100"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="profileEmail">Email Address</label>
+                        <input
+                            type="email"
+                            id="profileEmail"
+                            name="email"
+                            class="form-control"
+                            placeholder="Enter your email"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="reset" class="btn btn-secondary">
+                            Reset
+                        </button>
+
+                        <button type="submit" class="btn btn-primary">
+                            Save Changes
+                        </button>
+                    </div>
+
+                </form>
+
+                <div class="profile-divider"></div>
+
+                <form id="changePasswordForm" novalidate>
+
+                    <h3>Change Password</h3>
+                    <p class="form-description">
+                        Change your password to keep your account secure.
+                    </p>
+
+                    <div class="form-group">
+                        <label for="currentPassword">Current Password</label>
+                        <input
+                            type="password"
+                            id="currentPassword"
+                            name="currentPassword"
+                            class="form-control"
+                            placeholder="Enter current password"
+                            autocomplete="current-password"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newPassword">New Password</label>
+                        <input
+                            type="password"
+                            id="newPassword"
+                            name="newPassword"
+                            class="form-control"
+                            placeholder="Enter new password"
+                            autocomplete="new-password"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm New Password</label>
+                        <input
+                            type="password"
+                            id="confirmPassword"
+                            name="confirmPassword"
+                            class="form-control"
+                            placeholder="Confirm new password"
+                            autocomplete="new-password"
+                        >
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        Update Password
+                    </button>
+
+                </form>
+
+            </div>
+
+        </section>
+
+    </main>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="js/app.js"></script>
+<script src="js/profile.js"></script>
+
+</body>
+</html>
