@@ -281,3 +281,30 @@
     font-size: 22px;
   }
 }
+
+/* Form validation error messages */
+.error-msg {
+  display: block;
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 6px;
+  min-height: 0;
+  line-height: 1.4;
+}
+
+.error-msg:not(:empty) {
+  min-height: 16px;
+  margin-bottom: 4px;
+}
+
+/* Highlight invalid fields */
+.form-control:has(+ .error-msg:not(:empty)),
+.password-wrapper:has(+ .error-msg:not(:empty)) .form-control {
+  border-color: #dc2626;
+}
+
+/* Validation feedback */
+.form-control:focus {
+  outline: none;
+}
