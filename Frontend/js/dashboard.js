@@ -1,44 +1,180 @@
 
 document.addEventListener("DOMContentLoaded", () => {
-  if (!window.TaskFlowStore) return;
+  if (!window.TaskFlowStore) {
+    console.error("TaskFlowStore is not available.");
+    return;
+  }
 
-  const stats = TaskFlowStore.getStats();
-  const session = JSON.parse(sessionStorage.getItem("taskflow_session") || "{}");
+  let session = {};
 
-  const set = (id, value) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = value;
+  try {
+    session = JSON.parse(
+      sessionStorage.getItem("taskflow_session") || "{}"
+    );
+  } catch (error) {
+    console.error("Unable to read TaskFlow session:", error);
+  }
+
+  const setText = (id, value) => {
+    const element = document.getElementById(id);
+
+    if (element) {
+      element.textContent = value;
+    }
   };
 
-  set("welcomeUserName", session.name || "User");
-  set("statTotalTasks", stats.total);
-  set("statPendingTasks", stats.pending);
-  set("statCompletedTasks", stats.completed);
-  set("statCompletionRate", `${stats.completionRate}%`);
-  set("dashboardProgressText", `${stats.completionRate}%`);
-  set("dashboardProgressDesc", `${stats.completed} of ${stats.total} tasks completed`);
+  // UPDATE DASHBOARD STATISTICS
+  const renderStatistics = () => {
+    const stats = TaskFlowStore.getStats();
 
-  const progress = document.getElementById("dashboardProgressFill");
-  if (progress) progress.style.width = `${stats.completionRate}%`;
+    setText("welcomeUserName", session.name || "User");
 
-  const list = document.getElementById("recentTasksList");
-  if (list) {
-    const tasks = TaskFlowStore.getTasks().slice(0, 5);
+    setText("statTotalTasks", stats.total);
+    setText("statPendingTasks", stats.pending);
+    setText("statCompletedTasks", stats.completed);
+    setText("statCompletionRate", `${stats.completionRate}%`);
+
+    setText(
+      "dashboardProgressBadge",
+      `${stats.completionRate}% Complete`
+    );
+
+    setText(
+      "dashboardProgressText",
+      `${stats.completionRate}%`
+    );
+
+    setText(
+      "dashboardProgressDesc",
+      `${stats.completed} of ${stats.total} tasks completed`
+    );
+
+    const progress = document.getElementById(
+      "dashboardProgressFill"
+    );
+
+    if (progress) {
+      const percentage = Math.min(
+        100,
+        Math.max(0, Number(stats.completionRate) || 0)
+      );
+
+      progress.style.width = `${percentage}%`;
+      progress.setAttribute("aria-valuenow", percentage);
+    }
+  };
+
+  // RENDER RECENT TASKS
+  const renderRecentTasks = () => {
+    const list = document.getElementById("recentTasksList");
+
+    if (!list) return;
+
+    const priorityFilter = document.getElementById(
+      "recentPriorityFilter"
+    );
+
+    const selectedPriority = priorityFilter
+      ? priorityFilter.value.toLowerCase()
+      : "all";
+
+    const allTasks = TaskFlowStore.getTasks();
+
+    // FILTER TASKS BY PRIORITY
+    const filteredTasks = allTasks.filter(task => {
+      if (selectedPriority === "all") {
+        return true;
+      }
+
+      const taskPriority = String(
+        task.priority || "medium"
+      ).toLowerCase();
+
+      return taskPriority === selectedPriority;
+    });
+
+    // SHOW LATEST FIVE MATCHING TASKS
+    const recentTasks = filteredTasks.slice(0, 5);
+
     list.replaceChildren();
 
-    if (!tasks.length) {
-      list.textContent = "No tasks yet. Add your first task!";
-    } else {
-      tasks.forEach(task => {
-        const item = document.createElement("div");
-        item.className = "recent-task-item";
-        const title = document.createElement("span");
-        title.textContent = task.title;
-        const status = document.createElement("span");
-        status.textContent = task.status.replace("_", " ");
-        item.append(title, status);
-        list.appendChild(item);
-      });
+    if (recentTasks.length === 0) {
+      const emptyMessage = document.createElement("p");
+
+      emptyMessage.className = "recent-tasks-empty";
+
+      emptyMessage.textContent =
+        selectedPriority === "all"
+          ? "No tasks yet. Add your first task!"
+          : `No ${selectedPriority}-priority tasks found.`;
+
+      list.appendChild(emptyMessage);
+      return;
     }
+
+    recentTasks.forEach(task => {
+      const item = document.createElement("div");
+
+      item.className = "recent-task-item";
+
+      // TASK TITLE
+      const title = document.createElement("span");
+
+      title.className = "recent-task-title";
+      title.textContent = task.title || "Untitled Task";
+
+      // TASK DETAILS
+      const details = document.createElement("div");
+
+      details.className = "recent-task-details";
+
+      // PRIORITY BADGE
+      const priority = document.createElement("span");
+
+      const priorityValue = String(
+        task.priority || "medium"
+      ).toLowerCase();
+
+      const validPriorities = ["high", "medium", "low"];
+
+      const safePriority = validPriorities.includes(priorityValue)
+        ? priorityValue
+        : "medium";
+
+      priority.className =
+        `task-priority priority-${safePriority}`;
+
+      priority.textContent =
+        safePriority.charAt(0).toUpperCase() +
+        safePriority.slice(1);
+
+      // STATUS BADGE
+      const status = document.createElement("span");
+
+      status.className = "recent-task-status";
+
+      status.textContent = String(
+        task.status || "pending"
+      ).replace(/_/g, " ");
+
+      details.append(priority, status);
+
+      item.append(title, details);
+
+      list.appendChild(item);
+    });
+  };
+
+  // PRIORITY FILTER EVENT LISTENER
+  const priorityFilter = document.getElementById(
+    "recentPriorityFilter"
+  );
+
+  if (priorityFilter) {
+    priorityFilter.addEventListener("change", renderRecentTasks);
   }
+
+  // INITIAL RENDER
+  renderStatistics();
+  renderRecentTasks();
 });

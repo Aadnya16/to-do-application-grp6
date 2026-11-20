@@ -468,3 +468,276 @@
         animation-duration: 0.01ms !important;
     }
 }
+/* Dashboard layout spacing */
+.page-content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    min-width: 0;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+    align-items: stretch;
+}
+
+.dashboard-grid > .card {
+    min-width: 0;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+.progress-footer {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+
+.dashboard-description {
+    margin: 6px 0 12px;
+    color: var(--text-medium);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.recent-tasks-header {
+    flex-wrap: wrap;
+}
+
+.recent-task-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.priority-filter {
+    min-height: 36px;
+    padding: 7px 30px 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--text-dark);
+    font: inherit;
+    cursor: pointer;
+}
+
+.recent-task-details {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.task-priority,
+.recent-task-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 9px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.priority-high {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.priority-medium {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.priority-low {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.recent-tasks-empty {
+    padding: 18px 0;
+    color: var(--text-medium);
+    text-align: center;
+}
+
+@media (max-width: 850px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .recent-task-controls {
+        width: 100%;
+    }
+
+    .priority-filter {
+        flex: 1;
+        min-width: 120px;
+    }
+}
+
+/* =========================================
+   DASHBOARD LAYOUT FIXES
+========================================= */
+
+.page-content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    min-width: 0;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 22px;
+}
+
+.dashboard-grid > .card {
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.dashboard-description {
+    margin: 6px 0 12px;
+    color: var(--text-medium);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.progress-footer {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+
+/* =========================================
+   PRIORITY FILTER
+========================================= */
+
+.dashboard-filter-bar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin: 20px 0;
+    padding: 15px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+}
+
+.dashboard-filter-bar label {
+    color: var(--text-dark);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.priority-filter {
+    min-width: 190px;
+    padding: 10px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #fff;
+    color: #1e293b;
+    font: inherit;
+    cursor: pointer;
+}
+
+.priority-filter:focus {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+}
+
+/* =========================================
+   RECENT TASKS
+========================================= */
+
+.recent-task-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.recent-task-item:last-child {
+    border-bottom: none;
+}
+
+.recent-task-title {
+    color: var(--text-dark);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.recent-task-details {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.task-priority,
+.recent-task-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 9px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.priority-high {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.priority-medium {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.priority-low {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.recent-tasks-empty {
+    padding: 20px 0;
+    color: var(--text-medium);
+    text-align: center;
+}
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 850px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .dashboard-filter-bar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .priority-filter {
+        width: 100%;
+    }
+
+    .recent-task-item {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
