@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskFlow — Master Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/master-admin-dashboard.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+<div class="app-layout master-layout" id="appLayout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon"><i data-lucide="square-check-big"></i></div><div class="logo-text">TaskFlow</div><button class="sidebar-collapse-btn" id="sidebarCollapseBtn" type="button" aria-label="Collapse sidebar"><i data-lucide="panel-left-close"></i></button></div>
+    <nav class="sidebar-nav" aria-label="Master Admin navigation">
+      <div class="nav-label">System</div>
+      <a href="master-admin-dashboard.html" class="nav-item active" aria-current="page"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span><span class="nav-text">System overview</span></a>
+      <a href="#requests" class="nav-item"><span class="nav-icon"><i data-lucide="user-check"></i></span><span class="nav-text">Admin requests</span><span class="nav-count" id="navRequestCount">0</span></a>
+      <a href="#administrators" class="nav-item"><span class="nav-icon"><i data-lucide="shield"></i></span><span class="nav-text">Administrators</span></a>
+      <a href="#users" class="nav-item"><span class="nav-icon"><i data-lucide="users"></i></span><span class="nav-text">Users</span></a>
+      <div class="nav-label nav-label-account">Account</div>
+      <a href="profile.html" class="nav-item"><span class="nav-icon"><i data-lucide="user-round"></i></span><span class="nav-text">Profile</span></a>
+    </nav>
+    <div class="sidebar-footer"><div class="profile-menu-wrap">
+      <button class="profile-trigger" id="profileTrigger" type="button" aria-expanded="false"><span class="user-avatar" id="sidebarAvatar">MA</span><span class="profile-label"><span class="user-name" id="sidebarName">Master Admin</span><span class="user-role" id="sidebarRole">Master Admin</span></span><i data-lucide="chevron-down" class="profile-chevron"></i></button>
+      <div class="profile-menu" id="profileMenu" hidden><a href="profile.html" class="profile-menu-item"><i data-lucide="user-round"></i>Profile</a><button class="profile-menu-item logout-item" type="button" id="logoutTrigger"><i data-lucide="log-out"></i>Logout</button></div>
+    </div></div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <div class="main-content">
+    <header class="topbar master-topbar"><div class="topbar-left"><button class="hamburger" id="hamburgerBtn" type="button" aria-label="Open navigation"><i data-lucide="menu"></i></button><h1 class="page-title">Master Admin Dashboard</h1></div><div class="date-clock"><span id="currentDate"></span><strong id="currentTime"></strong></div></header>
+    <main class="page-content master-content">
+      <section class="master-intro"><span class="master-intro-mark"></span><div><h2>System overview</h2><p>Manage administrator access and keep an eye on TaskFlow.</p></div><div class="intro-status"><span class="status-dot"></span>System status <strong>Operational</strong></div></section>
+      <section class="master-metrics" aria-label="System statistics">
+        <article class="master-metric-card"><div class="metric-top"><span class="metric-icon metric-blue"><i data-lucide="users"></i></span><span class="metric-caption">Accounts</span></div><div class="metric-value" id="totalUsers">—</div><div class="metric-label">Registered users</div></article>
+        <article class="master-metric-card"><div class="metric-top"><span class="metric-icon metric-violet"><i data-lucide="shield-check"></i></span><span class="metric-caption">Access</span></div><div class="metric-value" id="totalAdmins">—</div><div class="metric-label">Active administrators</div></article>
+        <article class="master-metric-card request-metric"><div class="metric-top"><span class="metric-icon metric-amber"><i data-lucide="user-round-plus"></i></span><span class="metric-caption">Needs review</span></div><div class="metric-value" id="pendingRequests">—</div><div class="metric-label">Pending admin requests</div></article>
+        <article class="master-metric-card"><div class="metric-top"><span class="metric-icon metric-green"><i data-lucide="activity"></i></span><span class="metric-caption">Status</span></div><div class="metric-value" id="activeAccounts">—</div><div class="metric-label">Active accounts</div></article>
+      </section>
+      <section class="master-main-grid">
+        <article class="panel requests-panel" id="requests">
+          <div class="panel-heading"><div><h3>Admin access requests</h3><p>Review requests before granting administrator access.</p></div><span class="count-pill" id="requestCountLabel">0 pending</span></div>
+          <div class="request-list" id="requestList"></div>
+          <div class="panel-footer"><a href="#administrators" class="panel-link">View administrators <i data-lucide="arrow-right"></i></a></div>
+        </article>
+        <article class="panel system-panel">
+          <div class="panel-heading"><div><h3>TaskFlow at a glance</h3><p>Activity across all accounts</p></div><span class="period-pill">All time</span></div>
+          <div class="system-stats"><div class="system-stat"><span class="stat-icon stat-blue"><i data-lucide="clipboard-list"></i></span><div><strong id="globalTasks">0</strong><span>Total tasks</span></div></div><div class="system-stat"><span class="stat-icon stat-green"><i data-lucide="check-circle-2"></i></span><div><strong id="globalCompleted">0</strong><span>Completed</span></div></div><div class="system-stat"><span class="stat-icon stat-amber"><i data-lucide="clock-3"></i></span><div><strong id="globalPending">0</strong><span>Pending / in progress</span></div></div></div>
+          <div class="completion-wrap"><div class="completion-label"><span>Completion rate</span><strong id="completionRate">0%</strong></div><div class="completion-track"><span id="completionBar"></span></div></div>
+          <div class="system-note"><i data-lucide="info"></i><span>Task totals are based on task records available in this browser prototype.</span></div>
+        </article>
+      </section>
+      <section class="panel table-panel" id="administrators">
+        <div class="panel-heading"><div><h3>Administrators</h3><p>Accounts with admin access to monitor the application.</p></div><button class="table-action" type="button" id="refreshBtn"><i data-lucide="refresh-cw"></i>Refresh</button></div>
+        <div class="table-scroll"><table><thead><tr><th>Administrator</th><th>Email</th><th>Account status</th><th>Access granted</th></tr></thead><tbody id="adminTableBody"></tbody></table></div>
+        <div class="empty-table" id="adminEmpty" hidden><i data-lucide="shield"></i><span>No administrator accounts to display yet.</span></div>
+      </section>
+      <section class="panel table-panel users-panel" id="users">
+        <div class="panel-heading"><div><h3>Recent users</h3><p>Latest accounts registered with TaskFlow.</p></div><span class="period-pill">Latest accounts</span></div>
+        <div class="table-scroll"><table><thead><tr><th>User</th><th>Email</th><th>Account status</th><th>Joined</th></tr></thead><tbody id="usersTableBody"></tbody></table></div>
+        <div class="empty-table" id="usersEmpty" hidden><i data-lucide="users"></i><span>No user accounts to display yet.</span></div>
+      </section>
+      <p class="master-footnote"><i data-lucide="shield-check"></i>Master Admin controls are restricted to account access and system oversight.</p>
+    </main>
+  </div>
+</div>
+<div class="modal-overlay" id="decisionModal" aria-hidden="true"><div class="modal decision-modal" role="dialog" aria-modal="true" aria-labelledby="decisionTitle"><span class="decision-icon" id="decisionIcon"><i data-lucide="shield-check"></i></span><h3 class="modal-title" id="decisionTitle">Approve administrator?</h3><p class="modal-body" id="decisionBody">This request will be updated.</p><div class="modal-actions"><button class="btn btn-outline btn-sm" type="button" id="decisionCancel">Cancel</button><button class="btn btn-primary btn-sm" type="button" id="decisionConfirm">Confirm</button></div></div></div>
+<div class="modal-overlay" id="logoutModalOverlay" aria-hidden="true"><div class="modal"><h3 class="modal-title">Confirm logout</h3><div class="modal-body">Are you sure you want to end your current session?</div><div class="modal-actions"><button class="btn btn-outline btn-sm" type="button" id="cancelLogoutBtn">Cancel</button><button class="btn btn-danger btn-sm" type="button" id="confirmLogoutBtn">Yes, logout</button></div></div></div>
+<div class="toast-container" id="toastContainer" aria-live="polite"></div>
+<script src="js/demo-data.js"></script><script src="js/demo-auth.js"></script><script src="js/master-admin-dashboard.js"></script>
+</body></html>
