@@ -3,62 +3,6 @@ document.addEventListener("DOMContentLoaded", () => {
   "use strict";
 
   const $ = id => document.getElementById(id);
-  const USERS_KEY = "taskflow_users";
-
-  const DEMO_ADMIN = {
-    id: "taskflow-demo-admin",
-    name: "TaskFlow Admin",
-    email: "admin@taskflow.dev",
-    password: "admin123",
-    role: "admin",
-    status: "active",
-    isDemo: true,
-    createdAt: "2026-01-01T00:00:00.000Z"
-  };
-
-  const DEMO_USER = {
-    id: "taskflow-demo-user",
-    name: "Demo User",
-    email: "user@taskflow.dev",
-    password: "user123",
-    role: "user",
-    status: "active",
-    isDemo: true,
-    createdAt: "2026-01-01T00:00:00.000Z"
-  };
-
-  const readUsers = () => {
-    try {
-      const value = JSON.parse(localStorage.getItem(USERS_KEY) || "[]");
-      return Array.isArray(value) ? value : [];
-    } catch {
-      return [];
-    }
-  };
-
-  const saveUsers = users =>
-    localStorage.setItem(USERS_KEY, JSON.stringify(users));
-
-  // Frontend demo accounts. Replace with securely provisioned backend accounts.
-  function seedDemoAccounts() {
-    const users = readUsers();
-    let changed = false;
-
-    if (!users.some(u => u.email?.toLowerCase() === DEMO_ADMIN.email)) {
-      users.push(DEMO_ADMIN);
-      changed = true;
-    }
-
-    if (!users.some(u => u.email?.toLowerCase() === DEMO_USER.email)) {
-      users.push(DEMO_USER);
-      changed = true;
-    }
-
-    if (changed) saveUsers(users);
-  }
-
-  seedDemoAccounts();
-
   const toast = (message, type = "success") => {
     if (window.TaskFlowApp?.showToast) {
       window.TaskFlowApp.showToast(message, type);
@@ -130,11 +74,6 @@ document.addEventListener("DOMContentLoaded", () => {
     $("adminNoticeSwitch").style.display =
       role === "admin" ? "block" : "none";
 
-    $("demoCredText").textContent =
-      role === "admin"
-        ? "Demo admin: admin@taskflow.dev / admin123"
-        : "Demo user: user@taskflow.dev / user123";
-
     clearErrors(["loginEmailError", "loginPasswordError"]);
   }
 
@@ -157,15 +96,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // Role selection
   $("userRoleBtn").addEventListener("click", () => openLogin("user"));
   $("adminRoleBtn").addEventListener("click", () => openLogin("admin"));
-
-  // Demo autofill
-  $("fillDemoBtn").addEventListener("click", () => {
-    $("loginEmail").value =
-      currentRole === "admin" ? DEMO_ADMIN.email : DEMO_USER.email;
-
-    $("loginPassword").value =
-      currentRole === "admin" ? DEMO_ADMIN.password : DEMO_USER.password;
-  });
 
   // Navigation
   $("switchToRegister").addEventListener("click", event => {
@@ -192,8 +122,22 @@ document.addEventListener("DOMContentLoaded", () => {
     openLogin("admin");
   });
 
+  // Same rules as the backend (the backend re-checks everything).
+  const passwordProblem = value => {
+    if (value.length < 8) return "Password must contain at least 8 characters.";
+    if (!/[A-Za-z]/.test(value) || !/\d/.test(value)) {
+      return "Password must contain both letters and numbers.";
+    }
+    return "";
+  };
+
+  const busy = (form, isBusy) => {
+    const button = form.querySelector('button[type="submit"]');
+    if (button) button.disabled = isBusy;
+  };
+
   // Login
-  $("loginForm").addEventListener("submit", event => {
+  $("loginForm").addEventListener("submit", async event => {
     event.preventDefault();
 
     clearErrors(["loginEmailError", "loginPasswordError"]);
@@ -211,56 +155,35 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const user = readUsers().find(account =>
-      account.email?.toLowerCase() === email &&
-      account.password === password
-    );
+    busy($("loginForm"), true);
 
-    if (!user) {
-      setError("loginPasswordError", "Invalid email or password.");
-      return;
-    }
+    try {
+      // The backend checks the bcrypt hash and returns a signed token.
+      const user = await TaskFlowAPI.login(email, password);
 
-    if (currentRole === "admin") {
-      if (user.role !== "admin" || user.status !== "active") {
+      if (user.role !== currentRole) {
+        TaskFlowAPI.clearSession();
         setError(
           "loginPasswordError",
-          "Admin access is pending approval or has been rejected."
+          currentRole === "admin"
+            ? "This account is not an administrator."
+            : "This account cannot access the user dashboard."
         );
         return;
       }
 
-      sessionStorage.setItem("taskflow_session", JSON.stringify({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: "admin"
-      }));
-
-      location.href = "admin-dashboard.html";
-      return;
+      location.href = user.role === "admin"
+        ? "admin-dashboard.html"
+        : "dashboard.html";
+    } catch (error) {
+      setError("loginPasswordError", error.message);
+    } finally {
+      busy($("loginForm"), false);
     }
-
-    if (user.role !== "user" || user.status !== "active") {
-      setError(
-        "loginPasswordError",
-        "This account cannot access the user dashboard."
-      );
-      return;
-    }
-
-    sessionStorage.setItem("taskflow_session", JSON.stringify({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: "user"
-    }));
-
-    location.href = "dashboard.html";
   });
 
   // User registration
-  $("registerForm").addEventListener("submit", event => {
+  $("registerForm").addEventListener("submit", async event => {
     event.preventDefault();
 
     clearErrors(["regNameError", "regEmailError", "regPasswordError"]);
@@ -281,39 +204,30 @@ document.addEventListener("DOMContentLoaded", () => {
       invalid = true;
     }
 
-    if (password.length < 6) {
-      setError("regPasswordError", "Password must contain at least 6 characters.");
+    const problem = passwordProblem(password);
+    if (problem) {
+      setError("regPasswordError", problem);
       invalid = true;
     }
 
     if (invalid) return;
 
-    const users = readUsers();
+    busy($("registerForm"), true);
 
-    if (users.some(user => user.email?.toLowerCase() === email)) {
-      setError("regEmailError", "This email is already registered.");
-      return;
+    try {
+      await TaskFlowAPI.register(name, email, password);
+      $("registerForm").reset();
+      toast("Account created. You can now sign in.");
+      openLogin("user");
+    } catch (error) {
+      setError(error.status === 409 ? "regEmailError" : "regPasswordError", error.message);
+    } finally {
+      busy($("registerForm"), false);
     }
-
-    users.push({
-      id: crypto.randomUUID ? crypto.randomUUID() : `user-${Date.now()}`,
-      name,
-      email,
-      password,
-      role: "user",
-      status: "active",
-      createdAt: new Date().toISOString()
-    });
-
-    saveUsers(users);
-    $("registerForm").reset();
-
-    toast("Account created. You can now sign in.");
-    openLogin("user");
   });
 
-  // Admin registration request
-  $("adminRegisterForm").addEventListener("submit", event => {
+  // Admin registration request (stays "pending" until an admin approves it)
+  $("adminRegisterForm").addEventListener("submit", async event => {
     event.preventDefault();
 
     clearErrors([
@@ -338,38 +252,30 @@ document.addEventListener("DOMContentLoaded", () => {
       invalid = true;
     }
 
-    if (password.length < 6) {
-      setError("adminRegPasswordError", "Password must contain at least 6 characters.");
+    const problem = passwordProblem(password);
+    if (problem) {
+      setError("adminRegPasswordError", problem);
       invalid = true;
     }
 
     if (invalid) return;
 
-    const users = readUsers();
+    busy($("adminRegisterForm"), true);
 
-    if (users.some(user => user.email?.toLowerCase() === email)) {
-      setError("adminRegEmailError", "This email is already registered.");
-      return;
+    try {
+      await TaskFlowAPI.registerAdmin(name, email, password);
+      $("adminRegisterForm").reset();
+
+      showScreen("pendingScreen");
+      setTitle(
+        "Request Submitted",
+        "Your administrator request is awaiting approval."
+      );
+    } catch (error) {
+      setError(error.status === 409 ? "adminRegEmailError" : "adminRegPasswordError", error.message);
+    } finally {
+      busy($("adminRegisterForm"), false);
     }
-
-    users.push({
-      id: crypto.randomUUID ? crypto.randomUUID() : `admin-request-${Date.now()}`,
-      name,
-      email,
-      password,
-      role: "pending_admin",
-      status: "pending",
-      createdAt: new Date().toISOString()
-    });
-
-    saveUsers(users);
-    $("adminRegisterForm").reset();
-
-    showScreen("pendingScreen");
-    setTitle(
-      "Request Submitted",
-      "Your administrator request is awaiting approval."
-    );
   });
 
   // Open the correct screen from URL

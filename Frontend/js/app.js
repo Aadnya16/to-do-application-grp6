@@ -45,15 +45,10 @@
     document.addEventListener("DOMContentLoaded", () => {
         const page = location.pathname.split("/").pop();
 
-        let session = null;
-
-        try {
-            session = JSON.parse(
-                sessionStorage.getItem("taskflow_session") || "null"
-            );
-        } catch (error) {
-            console.error("Could not read session:", error);
-        }
+        // UI convenience only: the backend enforces real access with the token.
+        const session = window.TaskFlowAPI
+            ? TaskFlowAPI.getSession()
+            : null;
 
         const protectedUserPages = [
             "dashboard.html",
@@ -117,8 +112,7 @@
         });
 
         $("#confirmLogoutBtn")?.addEventListener("click", () => {
-            sessionStorage.removeItem("taskflow_session");
-            sessionStorage.removeItem("taskflow_auth");
+            window.TaskFlowAPI?.clearSession();
             location.href = "login.html";
         });
 

@@ -1,20 +1,7 @@
-
 document.addEventListener("DOMContentLoaded", () => {
   "use strict";
 
   const $ = id => document.getElementById(id);
-
-  const read = key => {
-    try {
-      const value = JSON.parse(localStorage.getItem(key) || "[]");
-      return Array.isArray(value) ? value : [];
-    } catch {
-      return [];
-    }
-  };
-
-  const save = (key, value) =>
-    localStorage.setItem(key, JSON.stringify(value));
 
   const escapeHTML = value =>
     String(value ?? "").replace(/[&<>"']/g, char => ({
@@ -25,16 +12,10 @@ document.addEventListener("DOMContentLoaded", () => {
       "'": "&#39;"
     })[char]);
 
-  let session;
+  const session = window.TaskFlowAPI?.getSession();
 
-  try {
-    session = JSON.parse(
-      sessionStorage.getItem("taskflow_session") || "null"
-    );
-  } catch {
-    session = null;
-  }
-
+  // UI convenience only. The real protection is on the server: every /api/admin/*
+  // call is rejected (403) unless the token belongs to an active admin.
   if (!session || session.role !== "admin") {
     location.replace("login.html?mode=admin-login");
     return;
@@ -44,36 +25,31 @@ document.addEventListener("DOMContentLoaded", () => {
     $("adminName").textContent = session.name || "Administrator";
   }
 
-  function render() {
-    const allUsers = read("taskflow_users");
+  async function render() {
+    let users, requests, tasks;
 
-    const users = allUsers.filter(user =>
-      user.role === "user" && user.status === "active"
-    );
+    try {
+      [users, requests, tasks] = await Promise.all([
+        TaskFlowAPI.adminGetUsers(),
+        TaskFlowAPI.adminGetRequests(),
+        TaskFlowAPI.adminGetTasks()
+      ]);
+    } catch (error) {
+      if (error.status === 403) {
+        location.replace("index.html");
+        return;
+      }
+      alert(error.message);
+      return;
+    }
 
-    const requests = allUsers.filter(user =>
-      user.role === "pending_admin" && user.status === "pending"
-    );
+    const count = status => tasks.filter(task => task.status === status).length;
 
-    const tasks = read("taskflow_tasks");
-
-    const pending = tasks.filter(
-      task => task.status === "pending"
-    ).length;
-
-    const inProgress = tasks.filter(
-      task => task.status === "in_progress"
-    ).length;
-
-    const completed = tasks.filter(
-      task => task.status === "completed"
-    ).length;
-
+    const pending = count("pending");
+    const inProgress = count("in_progress");
+    const completed = count("completed");
     const total = tasks.length;
-
-    const rate = total
-      ? Math.round(completed / total * 100)
-      : 0;
+    const rate = total ? Math.round(completed / total * 100) : 0;
 
     $("totalUsers").textContent = users.length;
     $("totalTasks").textContent = total;
@@ -85,29 +61,18 @@ document.addEventListener("DOMContentLoaded", () => {
     $("overallProgressBar").style.width = `${rate}%`;
 
     // Registered users
-    const usersBody = $("usersTableBody");
-
-    usersBody.innerHTML = users.length
+    $("usersTableBody").innerHTML = users.length
       ? users.map(user => {
-          const ownTasks = tasks.filter(task =>
-            (task.ownerEmail || "").toLowerCase() ===
-            user.email.toLowerCase()
-          );
-
-          const done = ownTasks.filter(
-            task => task.status === "completed"
-          ).length;
-
-          const percent = ownTasks.length
-            ? Math.round(done / ownTasks.length * 100)
+          const percent = user.total_tasks
+            ? Math.round(user.completed_tasks / user.total_tasks * 100)
             : 0;
 
           return `
             <tr>
               <td>${escapeHTML(user.name)}</td>
               <td>${escapeHTML(user.email)}</td>
-              <td>${ownTasks.length}</td>
-              <td>${done}</td>
+              <td>${user.total_tasks}</td>
+              <td>${user.completed_tasks}</td>
               <td>${percent}%</td>
             </tr>
           `;
@@ -115,111 +80,72 @@ document.addEventListener("DOMContentLoaded", () => {
       : '<tr><td colspan="5">No registered users found.</td></tr>';
 
     // Pending admin requests
-    const requestsBody = $("adminRequestsTableBody");
-
-    requestsBody.innerHTML = requests.length
+    $("adminRequestsTableBody").innerHTML = requests.length
       ? requests.map(request => `
           <tr>
             <td>${escapeHTML(request.name)}</td>
             <td>${escapeHTML(request.email)}</td>
             <td>
-              ${request.createdAt
-                ? escapeHTML(new Date(request.createdAt).toLocaleDateString())
+              ${request.created_at
+                ? escapeHTML(new Date(request.created_at).toLocaleDateString())
                 : "—"}
             </td>
             <td class="request-actions">
-              <button
-                type="button"
-                class="btn btn-primary btn-sm"
-                data-action="approve"
-                data-id="${escapeHTML(request.id)}"
-              >Approve</button>
+              <button type="button" class="btn btn-primary btn-sm"
+                data-action="approve" data-id="${escapeHTML(request.user_id)}"
+                data-name="${escapeHTML(request.name)}">Approve</button>
 
-              <button
-                type="button"
-                class="btn btn-danger btn-sm"
-                data-action="reject"
-                data-id="${escapeHTML(request.id)}"
-              >Reject</button>
+              <button type="button" class="btn btn-danger btn-sm"
+                data-action="reject" data-id="${escapeHTML(request.user_id)}"
+                data-name="${escapeHTML(request.name)}">Reject</button>
             </td>
           </tr>
         `).join("")
       : '<tr><td colspan="4">No pending requests.</td></tr>';
 
     // All tasks
-    const tasksBody = $("adminTasksTableBody");
-
-    tasksBody.innerHTML = tasks.length
-      ? tasks.map(task => {
-          const owner = users.find(user =>
-            user.email.toLowerCase() ===
-            (task.ownerEmail || "").toLowerCase()
-          );
-
-          return `
-            <tr>
-              <td>${escapeHTML(task.title)}</td>
-              <td>${escapeHTML(owner?.name || task.ownerEmail || "Unknown")}</td>
-              <td>${escapeHTML(task.priority || "medium")}</td>
-              <td>${escapeHTML(task.dueDate || "—")}</td>
-              <td>${escapeHTML((task.status || "pending").replaceAll("_", " "))}</td>
-            </tr>
-          `;
-        }).join("")
+    $("adminTasksTableBody").innerHTML = tasks.length
+      ? tasks.map(task => `
+          <tr>
+            <td>${escapeHTML(task.title)}</td>
+            <td>${escapeHTML(task.owner_name || task.owner_email || "Unknown")}</td>
+            <td>${escapeHTML(task.priority || "medium")}</td>
+            <td>${escapeHTML(task.due_date || "—")}</td>
+            <td>${escapeHTML((task.status || "pending").replaceAll("_", " "))}</td>
+          </tr>
+        `).join("")
       : '<tr><td colspan="5">No tasks found.</td></tr>';
   }
 
   // Approve / reject requests
-  $("adminRequestsTableBody").addEventListener("click", event => {
+  $("adminRequestsTableBody").addEventListener("click", async event => {
     const button = event.target.closest("button[data-action]");
 
     if (!button) return;
 
-    const users = read("taskflow_users");
-
-    const target = users.find(user =>
-      String(user.id) === button.dataset.id &&
-      user.role === "pending_admin" &&
-      user.status === "pending"
-    );
-
-    if (!target) {
-      alert("This request is no longer pending.");
-      render();
-      return;
-    }
-
     const approve = button.dataset.action === "approve";
 
     const confirmed = confirm(
-      `${approve ? "Approve" : "Reject"} admin access for ${target.name}?`
+      `${approve ? "Approve" : "Reject"} admin access for ${button.dataset.name}?`
     );
 
     if (!confirmed) return;
 
-    target.role = approve ? "admin" : "rejected_admin";
-    target.status = approve ? "active" : "rejected";
+    button.disabled = true;
 
-    target[approve ? "approvedAt" : "rejectedAt"] =
-      new Date().toISOString();
-
-    target[approve ? "approvedBy" : "rejectedBy"] =
-      session.email;
-
-    save("taskflow_users", users);
-
-    alert(
-      approve
-        ? "Admin request approved."
-        : "Admin request rejected."
-    );
+    try {
+      await TaskFlowAPI.adminDecide(button.dataset.id, button.dataset.action);
+      alert(approve ? "Admin request approved." : "Admin request rejected.");
+    } catch (error) {
+      alert(error.message);
+    }
 
     render();
   });
 
   // Logout
   $("logoutBtn")?.addEventListener("click", () => {
-    sessionStorage.removeItem("taskflow_session");
+    TaskFlowAPI.clearSession();
     location.href = "index.html";
   });
 
@@ -235,13 +161,4 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   render();
-
-  window.addEventListener("storage", event => {
-    if (
-      event.key === "taskflow_users" ||
-      event.key === "taskflow_tasks"
-    ) {
-      render();
-    }
-  });
 });

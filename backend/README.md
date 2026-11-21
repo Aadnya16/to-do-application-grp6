@@ -1,92 +1,55 @@
 # TaskFlow Backend (FastAPI + PostgreSQL)
 
-This backend uses the existing database schema in `database/schema`. It does **not** create, drop, or modify tables.
-
-## 1. Requirements
-- Python 3.10+
-- PostgreSQL
-- Existing `todo_app` database with the `users`, `categories`, and `tasks` tables created by your teammate.
+## 1. Database
+Uses the existing `database/schema` as-is (no changes needed). Admin approval is stored in the `role` column: `user`, `admin`, `pending_admin`, `rejected_admin`.
 
 ## 2. Install
-Open a terminal inside the `backend` folder:
-
 ```bash
+cd backend
 python -m venv venv
-```
-
-Windows:
-```bash
-venv\Scripts\activate
-```
-
-macOS/Linux:
-```bash
-source venv/bin/activate
-```
-
-Then:
-```bash
+venv\Scripts\activate        # Windows   (macOS/Linux: source venv/bin/activate)
 pip install -r requirements.txt
 ```
 
-## 3. Configure database connection
-Copy `.env.example` to `.env` and replace `YOUR_PASSWORD` with the PostgreSQL password used on your machine.
+## 3. Configure
+Copy `.env.example` to `.env` and fill in:
+- `DATABASE_URL` - your PostgreSQL password
+- `JWT_SECRET` - required, 32+ random characters:
+  `python -c "import secrets; print(secrets.token_urlsafe(48))"`
+- `ALLOWED_ORIGINS` - the URL your frontend runs on (e.g. VS Code Live Server = `http://127.0.0.1:5500`)
+- `ADMIN_EMAIL` / `ADMIN_PASSWORD` - creates the FIRST admin on startup. Remove the password from `.env` afterwards.
 
-Example:
-```env
-DATABASE_URL=postgresql+psycopg2://postgres:my_password@localhost:5432/todo_app
-```
-
-The application automatically loads `DATABASE_URL` from this `.env` file.
-
-## 4. Run server
+## 4. Run
 ```bash
 uvicorn main:app --reload
 ```
+API docs (development only): http://127.0.0.1:8000/docs
 
-API base URL: `http://127.0.0.1:8000`
+Frontend: open `Frontend/index.html` with Live Server. The API address is `API_BASE` at the top of `Frontend/js/api.js`.
 
-Interactive API documentation: `http://127.0.0.1:8000/docs`
+## Security summary
+- Passwords are hashed with **bcrypt** (salted, 12 rounds). Plain passwords are never stored or returned.
+- Login returns a signed JWT; every task/admin route reads the user from the token. The client can no longer send a `user_id`.
+- Users only see/change their own tasks; other people's tasks return 404.
+- Role is decided by the server. Admin sign-ups are `pending_admin` until an active admin approves them.
+- Admin routes (`/api/admin/*`) return 403 for non-admins.
+- Login is rate limited (5 failures / 15 min per IP + email) and constant-time for unknown emails.
+- CORS only allows `ALLOWED_ORIGINS`. Unknown JSON fields are rejected.
 
-## 5. Endpoints
-
-| Method | Endpoint | Description |
+## Endpoints
+| Method | Endpoint | Access |
 |---|---|---|
-| POST | `/api/tasks` | Add a task |
-| GET | `/api/tasks?user_id=1` | List tasks for a user |
-| GET | `/api/tasks/{task_id}?user_id=1` | View one task |
-| PUT | `/api/tasks/{task_id}?user_id=1` | Update task fields |
-| DELETE | `/api/tasks/{task_id}?user_id=1` | Delete a task |
-| GET | `/api/health` | Check API and DB connection |
+| POST | `/api/auth/register` | public |
+| POST | `/api/auth/register-admin` | public (creates a pending request) |
+| POST | `/api/auth/login` | public |
+| GET / PUT | `/api/auth/me` | logged in |
+| POST | `/api/auth/change-password` | logged in |
+| POST / GET | `/api/tasks` | logged in (own tasks) |
+| GET / PUT / DELETE | `/api/tasks/{id}` | logged in (own tasks) |
+| GET | `/api/admin/users`, `/api/admin/tasks`, `/api/admin/admin-requests` | admin |
+| POST | `/api/admin/admin-requests/{user_id}/approve` or `reject` | admin |
 
-`user_id` is required for read/update/delete so a task can only be accessed in the context of its owner. For create, send `user_id` in the JSON body.
+Send the token as `Authorization: Bearer <token>`.
 
-## 6. Example POST body
-```json
-{
-  "user_id": 1,
-  "category_id": null,
-  "title": "Complete internship task",
-  "description": "Build CRUD APIs",
-  "status": "pending",
-  "priority": "high",
-  "due_date": "2026-11-25"
-}
-```
-
-## 7. Example update body
-```json
-{
-  "title": "Finish To-Do backend",
-  "status": "in_progress",
-  "priority": "medium"
-}
-```
-
-Allowed status values: `pending`, `in_progress`, `completed`.
-Allowed priority values: `low`, `medium`, `high`.
-
-## Important integration note
-The current frontend still loads `js/mock-data.js`, which stores tasks in browser `localStorage`. The backend API is separate until the frontend JavaScript is changed to call these endpoints using `fetch()`.
-
-Also, the current frontend demo login stores a name/email in browser storage; it does not authenticate against the PostgreSQL `users` table. For this CRUD assignment, the API accepts a database `user_id`. Do not expose this as production authentication: before deployment, connect login to a secure backend authentication system and derive the user ID from the authenticated session/token rather than trusting a user-supplied ID.
+## Before real deployment
+Use HTTPS, set `APP_ENV=production`, set `ALLOWED_ORIGINS` to the real frontend URL, and consider moving the token to an httpOnly cookie. The login rate limiter is in-memory (per process).
