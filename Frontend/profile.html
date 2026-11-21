@@ -1,189 +1,120 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskFlow — My Profile</title>
-
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/task.css">
-    <link rel="stylesheet" href="css/dashboard.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskFlow — Profile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/profile.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-
 <body>
-<div class="app-layout">
-
+  <div class="app-layout profile-layout" id="appLayout">
     <aside class="sidebar" id="sidebar">
-        <div class="sidebar-brand">
-            <span class="brand-icon">✓</span>
-            <span>TaskFlow</span>
+      <div class="sidebar-logo">
+        <div class="logo-icon"><i data-lucide="square-check-big"></i></div>
+        <div class="logo-text">TaskFlow</div>
+        <button class="sidebar-collapse-btn" id="sidebarCollapseBtn" type="button" aria-label="Collapse sidebar" title="Collapse sidebar"><i data-lucide="panel-left-close"></i></button>
+      </div>
+      <nav class="sidebar-nav" id="sidebarNav" aria-label="Main navigation"></nav>
+      <div class="sidebar-footer">
+        <div class="profile-menu-wrap">
+          <button class="profile-trigger" id="profileTrigger" type="button" aria-expanded="false" aria-controls="profileMenu">
+            <span class="user-avatar" id="sidebarAvatar">DU</span>
+            <span class="profile-label"><span class="user-name" id="sidebarName">Demo User</span><span class="user-role" id="sidebarRole">User</span></span>
+            <i data-lucide="chevron-down" class="profile-chevron"></i>
+          </button>
+          <div class="profile-menu" id="profileMenu" hidden>
+            <a class="profile-menu-item" href="profile.html"><i data-lucide="user-round"></i>Profile</a>
+            <button class="profile-menu-item logout-item" type="button" id="logoutTrigger"><i data-lucide="log-out"></i>Logout</button>
+          </div>
         </div>
-
-        <nav class="sidebar-nav">
-            <a href="dashboard.html" class="nav-link">
-                <span>▦</span> Dashboard
-            </a>
-
-            <a href="task-list.html" class="nav-link">
-                <span>☑</span> My Tasks
-            </a>
-
-            <a href="add-task.html" class="nav-link">
-                <span>＋</span> Add Task
-            </a>
-
-            <a href="profile.html" class="nav-link active">
-                <span>👤</span> My Profile
-            </a>
-        </nav>
-
-        <div class="sidebar-bottom">
-            <button type="button" class="nav-link logout-btn" id="logoutBtn">
-                <span>↪</span> Logout
-            </button>
-        </div>
+      </div>
     </aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-    <main class="main-content">
+    <div class="main-content">
+      <header class="topbar profile-topbar">
+        <div class="topbar-left">
+          <button class="hamburger" id="hamburgerBtn" type="button" aria-label="Open navigation"><i data-lucide="menu"></i></button>
+          <h1 class="page-title">Profile</h1>
+        </div>
+        <div class="date-clock"><span id="currentDate"></span><strong id="currentTime"></strong></div>
+      </header>
 
-        <header class="topbar">
-            <div class="topbar-left">
-                <button class="hamburger" id="menuToggle"
-                        aria-label="Toggle navigation">☰</button>
-
-                <div>
-                    <h1 class="page-title">My Profile</h1>
-                    <p class="page-subtitle">Manage your account information</p>
-                </div>
-            </div>
-        </header>
-
-        <section class="profile-page">
-
-            <div class="profile-card">
-
-                <div class="profile-header">
-                    <div class="profile-avatar" id="profileAvatar">U</div>
-
-                    <div>
-                        <h2 id="profileDisplayName">Your Name</h2>
-                        <p id="profileDisplayEmail">your@email.com</p>
-                        <span class="profile-role" id="profileRole">User</span>
-                        <span class="profile-status" id="profileStatus">Active</span>
-                    </div>
-                </div>
-
-                <div class="profile-divider"></div>
-
-                <form id="profileForm" novalidate>
-
-                    <h3>Personal Information</h3>
-                    <p class="form-description">
-                        Update the details associated with your account.
-                    </p>
-
-                    <div class="form-group">
-                        <label for="profileName">Full Name</label>
-                        <input
-                            type="text"
-                            id="profileName"
-                            name="name"
-                            class="form-control"
-                            placeholder="Enter your full name"
-                            maxlength="100"
-                            required
-                        >
-                    </div>
-
-                    <div class="form-group">
-                        <label for="profileEmail">Email Address</label>
-                        <input
-                            type="email"
-                            id="profileEmail"
-                            name="email"
-                            class="form-control"
-                            placeholder="Enter your email"
-                            required
-                        >
-                    </div>
-
-                    <div class="form-actions">
-                        <button type="reset" class="btn btn-secondary">
-                            Reset
-                        </button>
-
-                        <button type="submit" class="btn btn-primary">
-                            Save Changes
-                        </button>
-                    </div>
-
-                </form>
-
-                <div class="profile-divider"></div>
-
-                <form id="changePasswordForm" novalidate>
-
-                    <h3>Change Password</h3>
-                    <p class="form-description">
-                        Change your password to keep your account secure.
-                    </p>
-
-                    <div class="form-group">
-                        <label for="currentPassword">Current Password</label>
-                        <input
-                            type="password"
-                            id="currentPassword"
-                            name="currentPassword"
-                            class="form-control"
-                            placeholder="Enter current password"
-                            autocomplete="current-password"
-                        >
-                    </div>
-
-                    <div class="form-group">
-                        <label for="newPassword">New Password</label>
-                        <input
-                            type="password"
-                            id="newPassword"
-                            name="newPassword"
-                            class="form-control"
-                            placeholder="Enter new password"
-                            autocomplete="new-password"
-                        >
-                    </div>
-
-                    <div class="form-group">
-                        <label for="confirmPassword">Confirm New Password</label>
-                        <input
-                            type="password"
-                            id="confirmPassword"
-                            name="confirmPassword"
-                            class="form-control"
-                            placeholder="Confirm new password"
-                            autocomplete="new-password"
-                        >
-                    </div>
-
-                    <button type="submit" class="btn btn-primary">
-                        Update Password
-                    </button>
-
-                </form>
-
-            </div>
-
+      <main class="page-content profile-content">
+        <section class="profile-intro">
+          <div class="profile-intro-mark"></div>
+          <div>
+            <h2>Your profile</h2>
+            <p>Your account information in one place.</p>
+          </div>
         </section>
 
-    </main>
-</div>
+        <section class="profile-hero-card" aria-label="Profile overview">
+          <div class="profile-hero-main">
+            <div class="profile-avatar-large" id="profileAvatar">DU</div>
+            <div class="profile-identity">
+              <h2 id="profileName">Demo User</h2>
+              <p id="profileEmail">demo.user@taskflow.local</p>
+              <div class="profile-identity-tags">
+                <span class="role-chip" id="profileRoleChip"><i data-lucide="user-round"></i><span>User</span></span>
+                <span class="status-chip" id="profileStatusChip"><span class="status-dot"></span><span>Active</span></span>
+              </div>
+            </div>
+          </div>
+          <div class="profile-hero-note">
+            <i data-lucide="shield-check"></i>
+            <span>Account overview</span>
+          </div>
+        </section>
 
-<div class="sidebar-overlay" id="sidebarOverlay"></div>
-<div class="toast-container" id="toastContainer"></div>
+        <section class="profile-details-section">
+          <div class="section-heading">
+            <div><h3>Account information</h3><p>Details associated with your TaskFlow account.</p></div>
+            <span class="section-icon"><i data-lucide="user-round-cog"></i></span>
+          </div>
+          <div class="profile-details-card">
+            <div class="profile-detail-row">
+              <div class="detail-label"><span class="detail-icon"><i data-lucide="user-round"></i></span><span>Full name</span></div>
+              <div class="detail-value" id="detailName">Demo User</div>
+            </div>
+            <div class="profile-detail-row">
+              <div class="detail-label"><span class="detail-icon"><i data-lucide="mail"></i></span><span>Email address</span></div>
+              <div class="detail-value" id="detailEmail">demo.user@taskflow.local</div>
+            </div>
+            <div class="profile-detail-row">
+              <div class="detail-label"><span class="detail-icon"><i data-lucide="badge-check"></i></span><span>Role</span></div>
+              <div class="detail-value" id="detailRole">User</div>
+            </div>
+            <div class="profile-detail-row">
+              <div class="detail-label"><span class="detail-icon"><i data-lucide="activity"></i></span><span>Profile status</span></div>
+              <div class="detail-value"><span class="status-chip detail-status" id="detailStatus"><span class="status-dot"></span><span>Active</span></span></div>
+            </div>
+          </div>
+        </section>
 
-<script src="js/api.js"></script>
-<script src="js/app.js"></script>
-<script src="js/profile.js"></script>
+        <div class="profile-footnote"><i data-lucide="info"></i><span>This page displays the details of the account currently signed in.</span></div>
+      </main>
+    </div>
+  </div>
 
+
+  <div class="modal-overlay" id="logoutModalOverlay" aria-hidden="true">
+    <div class="modal profile-logout-modal" role="dialog" aria-modal="true" aria-labelledby="logoutModalTitle">
+      <h3 class="modal-title" id="logoutModalTitle">Confirm logout</h3>
+      <div class="modal-body">Are you sure you want to end your current session?</div>
+      <div class="modal-actions">
+        <button class="btn btn-outline btn-sm" type="button" id="cancelLogoutBtn">Cancel</button>
+        <button class="btn btn-danger btn-sm" type="button" id="confirmLogoutBtn">Yes, logout</button>
+      </div>
+    </div>
+  </div>
+  <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+  <script src="js/demo-data.js"></script><script src="js/demo-auth.js"></script><script src="js/profile.js"></script>
 </body>
 </html>

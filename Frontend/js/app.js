@@ -45,14 +45,18 @@
     document.addEventListener("DOMContentLoaded", () => {
         const page = location.pathname.split("/").pop();
 
-        // UI convenience only: the backend enforces real access with the token.
-        const session = window.TaskFlowAPI
-            ? TaskFlowAPI.getSession()
-            : null;
+        let session = null;
+
+        try {
+            session = JSON.parse(
+                sessionStorage.getItem("taskflow_session") || "null"
+            );
+        } catch (error) {
+            console.error("Could not read session:", error);
+        }
 
         const protectedUserPages = [
             "dashboard.html",
-            "task-list.html",
             "add-task.html",
             "profile.html"
         ];
@@ -65,8 +69,17 @@
             return;
         }
 
+        // Task List is shared: regular users see their tasks; admins use it as Task Overview.
         if (
-            page === "admin-dashboard.html" &&
+            page === "task-list.html" &&
+            (!session || !["user", "admin"].includes(session.role))
+        ) {
+            location.replace("index.html");
+            return;
+        }
+
+        if (
+            (page === "admin-dashboard.html" || page === "admin-task-overview.html") &&
             (!session || session.role !== "admin")
         ) {
             location.replace("index.html");
@@ -112,8 +125,9 @@
         });
 
         $("#confirmLogoutBtn")?.addEventListener("click", () => {
-            window.TaskFlowAPI?.clearSession();
-            location.href = "login.html";
+            sessionStorage.removeItem("taskflow_session");
+            sessionStorage.removeItem("taskflow_auth");
+            location.href = "index.html";
         });
 
         document.querySelectorAll("[data-target].password-toggle-btn")

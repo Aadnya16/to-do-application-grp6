@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TaskFlow — Task List</title>
@@ -13,32 +17,41 @@
     <!-- SIDEBAR NAVIGATION -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-logo">
-        <div class="logo-icon">✓</div>
+        <div class="logo-icon"><i data-lucide="check-square"></i></div>
         <div class="logo-text">TaskFlow</div>
+        <button type="button" class="sidebar-collapse-btn" id="sidebarCollapseBtn" aria-label="Collapse sidebar" title="Collapse sidebar"><i data-lucide="panel-left-close"></i></button>
       </div>
 
       <nav class="sidebar-nav">
         <div class="nav-label">Main Menu</div>
         <a href="dashboard.html" class="nav-item">
-          <span class="nav-icon">📊</span>
+          <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span>
           <span>Dashboard</span>
         </a>
         <a href="task-list.html" class="nav-item active">
-          <span class="nav-icon">📋</span>
+          <span class="nav-icon"><i data-lucide="list-checks"></i></span>
           <span>Task List</span>
         </a>
         <a href="add-task.html" class="nav-item">
-          <span class="nav-icon">➕</span>
+          <span class="nav-icon"><i data-lucide="plus-square"></i></span>
           <span>Add Task</span>
         </a>
       </nav>
 
       <div class="sidebar-footer">
-        <div class="user-info">
-          <div class="user-avatar user-avatar-display">VD</div>
-          <div>
-            <div class="user-name user-name-display">Vrunda Dilip</div>
-            <div class="user-role user-role-display">UI/UX Designer</div>
+        <div class="profile-menu-wrap">
+          <button type="button" class="profile-menu-trigger" id="profileMenuTrigger" aria-expanded="false" aria-controls="profileMenu">
+            <div class="user-avatar user-avatar-display">VD</div>
+            <div class="profile-menu-user">
+              <div class="user-name user-name-display">Vrunda Dilip</div>
+              <div class="user-role user-role-display">UI/UX Designer</div>
+            </div>
+            <span class="profile-menu-chevron">⌄</span>
+          </button>
+          <div class="profile-menu" id="profileMenu">
+            <a href="profile.html"><i data-lucide="user-round"></i> Profile</a>
+            
+            <button type="button" class="btn-logout-trigger"><i data-lucide="log-out"></i> Logout</button>
           </div>
         </div>
       </div>
@@ -53,51 +66,87 @@
       <header class="topbar">
         <div class="topbar-left">
           <button type="button" class="hamburger" id="hamburgerBtn" aria-label="Toggle navigation menu">
-            ☰
+            <i data-lucide="menu"></i>
           </button>
           <h1 class="page-title">Task List</h1>
           <span class="badge badge-low" id="taskCountBadge" style="margin-left: 8px;">0 tasks</span>
         </div>
 
-        <div class="topbar-right">
-          <a href="add-task.html" class="btn btn-primary btn-sm">
-            <span>+</span> Add Task
-          </a>
-          <button type="button" class="logout-btn btn-logout-trigger">
-            <span>🚪</span>
-            <span>Logout</span>
-          </button>
+        <div class="topbar-right date-time-widget">
+          <div class="date-display" id="currentDateDisplay">Loading date…</div>
+          <div class="time-display" id="currentTimeDisplay" aria-live="off">--:--:--</div>
         </div>
       </header>
 
       <!-- Task List Page Content -->
       <main class="page-content">
-        <!-- Toolbar: Search Bar + Filter Pills -->
         <div class="task-toolbar">
-          <!-- 1. Search Box -->
-          <div class="search-box">
-            <span class="search-icon">🔍</span>
-            <input 
-              type="text" 
-              id="taskSearchInput" 
-              class="form-control" 
-              placeholder="Search tasks by title or keyword..."
-              aria-label="Search tasks"
-            >
-          </div>
+          <div class="task-toolbar-left">
+            <div class="search-box">
+              <span class="search-icon" aria-hidden="true">🔍</span>
+              <input type="text" id="taskSearchInput" class="form-control"
+                placeholder="Search tasks by title or description..." aria-label="Search tasks">
+            </div>
 
-          <!-- 2. Status Filters (All, Pending, Completed) -->
-          <div class="filter-group">
-            <button type="button" class="filter-pill active" data-filter="all">All</button>
-            <button type="button" class="filter-pill" data-filter="pending">Pending</button>
-            <button type="button" class="filter-pill" data-filter="completed">Completed</button>
+            <div class="filter-control">
+              <button type="button" class="filter-button" id="filterToggleBtn"
+                aria-expanded="false" aria-controls="filterPanel">
+                <i data-lucide="sliders-horizontal" aria-hidden="true"></i> Filters
+                <span class="filter-count" id="activeFilterCount" hidden>0</span>
+              </button>
+              <div class="filter-panel" id="filterPanel" aria-label="Task filters">
+                <div class="filter-panel-heading">
+                  <strong>Filter tasks</strong>
+                  <button type="button" id="clearFiltersBtn">Clear all</button>
+                </div>
+                <div class="filter-group-block">
+                  <h4>Status</h4>
+                  <div class="filter-options" id="statusFilterOptions">
+                    <button type="button" class="filter-option" data-status-filter="pending">Pending</button>
+                    <button type="button" class="filter-option" data-status-filter="completed">Completed</button>
+                  </div>
+                </div>
+                <div class="filter-group-block">
+                  <h4>Priority</h4>
+                  <div class="filter-options" id="priorityFilterOptions">
+                    <button type="button" class="filter-option" data-priority-filter="low">Low</button>
+                    <button type="button" class="filter-option" data-priority-filter="medium">Medium</button>
+                    <button type="button" class="filter-option" data-priority-filter="high">High</button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- 3. Dynamic Tasks Container -->
-        <div class="tasks-container" id="taskListContainer">
-          <!-- Dynamically populated by task-list.js -->
-        </div>
+        <div class="active-filter-chips" id="activeFilterChips" aria-live="polite"></div>
+
+        <section class="task-section" aria-labelledby="inProgressHeading">
+          <div class="task-section-header">
+            <div>
+              <h2 class="task-section-title" id="inProgressHeading">In Progress <span class="section-count" id="inProgressCount">0</span></h2>
+              <p class="task-section-subtitle">Your unfinished tasks</p>
+            </div>
+          </div>
+          <div class="tasks-grid" id="inProgressTasksContainer"></div>
+        </section>
+
+        <section class="task-section" aria-labelledby="completedHeading">
+          <details class="completed-archive" id="completedArchive">
+            <summary>
+              <span class="archive-summary-left"><i data-lucide="check-circle-2" aria-hidden="true"></i> Completed <span class="section-count" id="completedCount">0</span></span>
+              <span class="archive-summary-right"><span>View completed tasks</span><i class="archive-chevron" data-lucide="chevron-down" aria-hidden="true"></i></span>
+            </summary>
+            <div class="completed-archive-content">
+              <div class="completed-table-wrap">
+                <table class="completed-task-table">
+                  <thead><tr><th>Task</th><th>Priority</th><th>Due date</th><th>Completed</th><th>Actions</th></tr></thead>
+                  <tbody id="completedTasksContainer"></tbody>
+                </table>
+              </div>
+            </div>
+          </details>
+        </section>
       </main>
     </div>
   </div>
@@ -174,7 +223,7 @@
   <div class="toast-container" id="toastContainer"></div>
 
   <!-- Scripts -->
-  <script src="js/api.js"></script>
+  <script src="js/demo-data.js"></script><script src="js/demo-auth.js"></script><script src="js/mock-data.js"></script>
   <script src="js/app.js"></script>
   <script src="js/task-list.js"></script>
 </body>

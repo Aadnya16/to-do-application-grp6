@@ -1,164 +1,32 @@
-document.addEventListener("DOMContentLoaded", () => {
-  "use strict";
-
-  const $ = id => document.getElementById(id);
-
-  const escapeHTML = value =>
-    String(value ?? "").replace(/[&<>"']/g, char => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;"
-    })[char]);
-
-  const session = window.TaskFlowAPI?.getSession();
-
-  // UI convenience only. The real protection is on the server: every /api/admin/*
-  // call is rejected (403) unless the token belongs to an active admin.
-  if (!session || session.role !== "admin") {
-    location.replace("login.html?mode=admin-login");
-    return;
-  }
-
-  if ($("adminName")) {
-    $("adminName").textContent = session.name || "Administrator";
-  }
-
-  async function render() {
-    let users, requests, tasks;
-
-    try {
-      [users, requests, tasks] = await Promise.all([
-        TaskFlowAPI.adminGetUsers(),
-        TaskFlowAPI.adminGetRequests(),
-        TaskFlowAPI.adminGetTasks()
-      ]);
-    } catch (error) {
-      if (error.status === 403) {
-        location.replace("index.html");
-        return;
-      }
-      alert(error.message);
-      return;
-    }
-
-    const count = status => tasks.filter(task => task.status === status).length;
-
-    const pending = count("pending");
-    const inProgress = count("in_progress");
-    const completed = count("completed");
-    const total = tasks.length;
-    const rate = total ? Math.round(completed / total * 100) : 0;
-
-    $("totalUsers").textContent = users.length;
-    $("totalTasks").textContent = total;
-    $("pendingTasks").textContent = pending;
-    $("inProgressTasks").textContent = inProgress;
-    $("completedTasks").textContent = completed;
-
-    $("overallProgressText").textContent = `${rate}%`;
-    $("overallProgressBar").style.width = `${rate}%`;
-
-    // Registered users
-    $("usersTableBody").innerHTML = users.length
-      ? users.map(user => {
-          const percent = user.total_tasks
-            ? Math.round(user.completed_tasks / user.total_tasks * 100)
-            : 0;
-
-          return `
-            <tr>
-              <td>${escapeHTML(user.name)}</td>
-              <td>${escapeHTML(user.email)}</td>
-              <td>${user.total_tasks}</td>
-              <td>${user.completed_tasks}</td>
-              <td>${percent}%</td>
-            </tr>
-          `;
-        }).join("")
-      : '<tr><td colspan="5">No registered users found.</td></tr>';
-
-    // Pending admin requests
-    $("adminRequestsTableBody").innerHTML = requests.length
-      ? requests.map(request => `
-          <tr>
-            <td>${escapeHTML(request.name)}</td>
-            <td>${escapeHTML(request.email)}</td>
-            <td>
-              ${request.created_at
-                ? escapeHTML(new Date(request.created_at).toLocaleDateString())
-                : "—"}
-            </td>
-            <td class="request-actions">
-              <button type="button" class="btn btn-primary btn-sm"
-                data-action="approve" data-id="${escapeHTML(request.user_id)}"
-                data-name="${escapeHTML(request.name)}">Approve</button>
-
-              <button type="button" class="btn btn-danger btn-sm"
-                data-action="reject" data-id="${escapeHTML(request.user_id)}"
-                data-name="${escapeHTML(request.name)}">Reject</button>
-            </td>
-          </tr>
-        `).join("")
-      : '<tr><td colspan="4">No pending requests.</td></tr>';
-
-    // All tasks
-    $("adminTasksTableBody").innerHTML = tasks.length
-      ? tasks.map(task => `
-          <tr>
-            <td>${escapeHTML(task.title)}</td>
-            <td>${escapeHTML(task.owner_name || task.owner_email || "Unknown")}</td>
-            <td>${escapeHTML(task.priority || "medium")}</td>
-            <td>${escapeHTML(task.due_date || "—")}</td>
-            <td>${escapeHTML((task.status || "pending").replaceAll("_", " "))}</td>
-          </tr>
-        `).join("")
-      : '<tr><td colspan="5">No tasks found.</td></tr>';
-  }
-
-  // Approve / reject requests
-  $("adminRequestsTableBody").addEventListener("click", async event => {
-    const button = event.target.closest("button[data-action]");
-
-    if (!button) return;
-
-    const approve = button.dataset.action === "approve";
-
-    const confirmed = confirm(
-      `${approve ? "Approve" : "Reject"} admin access for ${button.dataset.name}?`
-    );
-
-    if (!confirmed) return;
-
-    button.disabled = true;
-
-    try {
-      await TaskFlowAPI.adminDecide(button.dataset.id, button.dataset.action);
-      alert(approve ? "Admin request approved." : "Admin request rejected.");
-    } catch (error) {
-      alert(error.message);
-    }
-
-    render();
-  });
-
-  // Logout
-  $("logoutBtn")?.addEventListener("click", () => {
-    TaskFlowAPI.clearSession();
-    location.href = "index.html";
-  });
-
-  // Mobile sidebar
-  $("menuToggle")?.addEventListener("click", () => {
-    $("sidebar")?.classList.toggle("open");
-    $("sidebarOverlay")?.classList.toggle("active");
-  });
-
-  $("sidebarOverlay")?.addEventListener("click", () => {
-    $("sidebar")?.classList.remove("open");
-    $("sidebarOverlay")?.classList.remove("active");
-  });
-
-  render();
-});
+(() => {
+  'use strict';
+  const $ = (s, root=document) => root.querySelector(s);
+  const safe = (value='') => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const initials = (name='User') => name.trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
+  const fmtDate = value => { if(!value) return '—'; const d=new Date(value); return Number.isNaN(d.getTime())?'—':d.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}); };
+  const fmtRelative = value => { if(!value) return 'No activity yet'; const d=new Date(value); if(Number.isNaN(d.getTime())) return 'No activity yet'; const diff=Math.max(0,Date.now()-d.getTime()); const mins=Math.floor(diff/60000); if(mins<1)return 'Just now'; if(mins<60)return `${mins} min${mins===1?'':'s'} ago`; const hrs=Math.floor(mins/60); if(hrs<24)return `${hrs} hour${hrs===1?'':'s'} ago`; const days=Math.floor(hrs/24); if(days<7)return `${days} day${days===1?'':'s'} ago`; return fmtDate(value); };
+  const statusOf = t => (t.status||'pending').toLowerCase().includes('complete')?'completed':(t.status||'pending').toLowerCase().includes('progress')?'in-progress':'pending';
+  const getTasks = () => { try { const store=window.TaskFlowStore; if(store?.getTasks) return store.getTasks()||[]; return JSON.parse(localStorage.getItem('taskflow_tasks')||'[]'); } catch { return []; } };
+  const getSession = () => { try{return JSON.parse(sessionStorage.getItem('taskflow_session')||'null')}catch{return null} };
+  const session=getSession();
+  if(!session || session.role!=='admin'){ location.replace('index.html'); return; }
+  // Until the backend user registry is connected, the table uses clearly identified sample accounts.
+  const demoUsers=(JSON.parse(localStorage.getItem('taskflow_users')||'[]')).filter(u=>u.role==='user'&&u.status==='active').map(u=>({name:u.name,email:u.email,role:u.role}));
+  let allTasks=getTasks();
+  let users=demoUsers.map(u=>({...u,tasks:allTasks.filter(t=>(t.ownerEmail||'').toLowerCase()===u.email.toLowerCase())}));
+  // If locally stored tasks belong to other users, include those owners in the overview as well.
+  const known=new Set(users.map(u=>u.email.toLowerCase()));
+  [...new Set(allTasks.map(t=>(t.ownerEmail||'').toLowerCase()).filter(Boolean))].forEach(email=>{if(!known.has(email)){users.push({name:email.split('@')[0].replace(/[._-]/g,' ').replace(/\b\w/g,c=>c.toUpperCase()),email,role:'user',tasks:allTasks.filter(t=>(t.ownerEmail||'').toLowerCase()===email)});known.add(email);}});
+  if(session?.email && !known.has(session.email.toLowerCase())) users.unshift({name:session.name||session.fullName||'Current Admin',email:session.email,role:session.role||'admin',tasks:[]});
+  const taskStats=tasks=>({total:tasks.length,completed:tasks.filter(t=>statusOf(t)==='completed').length,pending:tasks.filter(t=>statusOf(t)!=='completed').length});
+  function renderMetrics(){const stats=taskStats(allTasks);$('#metricUsers').textContent=users.length;$('#metricTasks').textContent=stats.total;$('#metricCompleted').textContent=stats.completed;$('#metricPending').textContent=stats.pending;$('#donutTotal').textContent=stats.total;const complete=stats.completed, pending=stats.pending;const total=Math.max(stats.total,1);$('#statusDonut').style.background=`conic-gradient(#2563eb 0 ${pending/total*100}%, #10b981 ${pending/total*100}% ${(pending+complete)/total*100}%, #e2e8f0 ${(pending+complete)/total*100}% 100%)`;$('#statusLegend').innerHTML=`<div class="legend-row"><span class="legend-dot" style="background:#2563eb"></span>Pending<strong>${pending}</strong></div><div class="legend-row"><span class="legend-dot" style="background:#10b981"></span>Completed<strong>${complete}</strong></div>`;}
+  function lastActivity(tasks){return tasks.reduce((latest,t)=>{const date=t.completedAt||t.updatedAt||t.createdAt;return date&&(!latest||new Date(date)>new Date(latest))?date:latest;},null);}
+  function renderUsers(filter=''){const filtered=users.filter(u=>(u.name+' '+u.email).toLowerCase().includes(filter.toLowerCase()));$('#usersTableBody').innerHTML=filtered.map(u=>{const s=taskStats(u.tasks);const last=lastActivity(u.tasks);return `<tr><td><div class="user-cell"><span class="table-avatar">${safe(initials(u.name))}</span><div><button type="button" class="user-name-link" data-user-email="${safe(u.email)}">${safe(u.name)}</button><span class="user-email">${safe(u.email)}</span></div></div></td><td><span class="table-number">${s.total}</span></td><td><span class="table-completed">${s.completed}</span></td><td><span class="table-pending">${s.pending}</span></td><td>${safe(fmtRelative(last))}</td><td><button type="button" class="view-logs-btn" data-user-email="${safe(u.email)}"><i data-lucide="file-clock"></i>View logs</button></td></tr>`;}).join('')||`<tr><td colspan="6"><div class="log-empty">No users match your search.</div></td></tr>`;$('#usersCount').textContent=`Showing ${filtered.length} of ${users.length} users`;window.lucide?.createIcons();}
+  function renderRecent(){const records=[];allTasks.forEach(t=>{records.push({task:t,kind:'created',date:t.createdAt||t.updatedAt});if(t.completedAt||statusOf(t)==='completed')records.push({task:t,kind:'completed',date:t.completedAt||t.updatedAt||t.createdAt});});records.sort((a,b)=>new Date(b.date||0)-new Date(a.date||0));const recent=records.slice(0,5);$('#recentActivity').innerHTML=recent.length?recent.map(r=>{const owner=users.find(u=>u.email.toLowerCase()===(r.task.ownerEmail||'').toLowerCase());const who=owner?.name||((r.task.ownerEmail||'').split('@')[0]||'A user');return `<div class="activity-row"><span class="activity-icon ${r.kind}"><i data-lucide="${r.kind==='completed'?'check-circle-2':'plus-circle'}"></i></span><div class="activity-copy"><strong>${safe(who)}</strong> ${r.kind==='completed'?'completed':'created'} a task<span class="activity-task">${safe(r.task.title||'Untitled task')}</span><span class="activity-time">${safe(fmtRelative(r.date))}</span></div></div>`;}).join(''):`<div class="activity-empty">No task activity yet.</div>`;window.lucide?.createIcons();}
+  function openLogs(email){const user=users.find(u=>u.email.toLowerCase()===email.toLowerCase());if(!user)return;const tasks=user.tasks.slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));const s=taskStats(tasks);$('#logAvatar').textContent=initials(user.name);$('#logModalTitle').textContent=user.name;$('#logModalEmail').textContent=user.email;$('#logSummary').innerHTML=`<div class="log-summary-card"><span>Total tasks</span><strong>${s.total}</strong></div><div class="log-summary-card"><span>Completed</span><strong>${s.completed}</strong></div><div class="log-summary-card"><span>Pending</span><strong>${s.pending}</strong></div>`;$('#logTaskCount').textContent=`${tasks.length} task${tasks.length===1?'':'s'}`;$('#userTaskLogs').innerHTML=tasks.length?tasks.map(t=>{const st=statusOf(t);return `<article class="log-task-card"><div class="log-task-top"><div><div class="log-task-title">${safe(t.title||'Untitled task')}</div>${t.description?`<p class="log-task-description">${safe(t.description)}</p>`:''}</div><span class="log-status ${st}">${st==='in-progress'?'In progress':st==='completed'?'Completed':'Pending'}</span></div><div class="log-task-meta"><span><i data-lucide="calendar-plus"></i>Created ${safe(fmtDate(t.createdAt))}</span>${t.dueDate?`<span><i data-lucide="calendar"></i>Due ${safe(fmtDate(t.dueDate))}</span>`:''}<span><i data-lucide="flag"></i>${safe((t.priority||'medium').replace(/^./,c=>c.toUpperCase()))} priority</span></div><div class="log-timeline"><span class="timeline-dot"></span><span>${st==='completed'?`Completed on ${safe(fmtDate(t.completedAt||t.updatedAt||t.createdAt))}`:`Task ${st==='in-progress'?'is in progress':'is pending'}${t.updatedAt?` · Last updated ${safe(fmtDate(t.updatedAt))}`:''}`}</span></div></article>`;}).join(''):`<div class="log-empty"><i data-lucide="clipboard-list"></i>No task records found for this user yet.</div>`;$('#taskLogModal').classList.add('show');$('#taskLogModal').setAttribute('aria-hidden','false');window.lucide?.createIcons();}
+  function closeLogs(){$('#taskLogModal').classList.remove('show');$('#taskLogModal').setAttribute('aria-hidden','true');}
+  function setupShell(){const layout=$('#appLayout');$('#sidebarCollapseBtn')?.addEventListener('click',()=>layout.classList.toggle('sidebar-collapsed'));$('#hamburgerBtn')?.addEventListener('click',()=>{$('#sidebar').classList.toggle('open');$('#sidebarOverlay').classList.toggle('active');});$('#sidebarOverlay')?.addEventListener('click',()=>{$('#sidebar').classList.remove('open');$('#sidebarOverlay').classList.remove('active');});const name=session?.name||session?.fullName||'Demo Admin';$('#sidebarName').textContent=name;$('#sidebarAvatar').textContent=initials(name);$('#sidebarRole').textContent='Administrator';$('#profileTrigger')?.addEventListener('click',()=>{const open=$('#profileTrigger').getAttribute('aria-expanded')==='true';$('#profileTrigger').setAttribute('aria-expanded',String(!open));$('#profileMenu').hidden=open;});document.addEventListener('click',e=>{if(!e.target.closest('.profile-menu-wrap')){$('#profileMenu').hidden=true;$('#profileTrigger').setAttribute('aria-expanded','false');}});$('#logoutTrigger')?.addEventListener('click',()=>$('#logoutModalOverlay').classList.add('show'));$('#cancelLogoutBtn')?.addEventListener('click',()=>$('#logoutModalOverlay').classList.remove('show'));$('#confirmLogoutBtn')?.addEventListener('click',()=>{sessionStorage.removeItem('taskflow_session');sessionStorage.removeItem('taskflow_auth');location.href='index.html';});$('#closeLogModal')?.addEventListener('click',closeLogs);$('#taskLogModal')?.addEventListener('click',e=>{if(e.target===$('#taskLogModal'))closeLogs();});document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeLogs();$('#logoutModalOverlay').classList.remove('show');$('#sidebar').classList.remove('open');$('#sidebarOverlay').classList.remove('active');}});}
+  function clock(){const d=new Date();$('#currentDateDisplay').textContent=d.toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric',year:'numeric'});$('#currentTimeDisplay').textContent=d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit',second:'2-digit'});const h=d.getHours();$('#greetingTitle').textContent=`Good ${h<12?'morning':h<17?'afternoon':'evening'}${session?.name?`, ${session.name.split(' ')[0]}`:''}!`;}
+  document.addEventListener('click',e=>{const btn=e.target.closest('[data-user-email]');if(btn)openLogs(btn.dataset.userEmail);});$('#userSearch')?.addEventListener('input',e=>renderUsers(e.target.value));
+  setupShell();clock();setInterval(clock,1000);renderMetrics();renderUsers();renderRecent();window.lucide?.createIcons();
+})();

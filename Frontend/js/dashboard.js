@@ -1,178 +1,28 @@
-
-document.addEventListener("DOMContentLoaded", async () => {
-  if (!window.TaskFlowAPI) {
-    console.error("TaskFlowAPI is not available.");
-    return;
-  }
-
-  const session = TaskFlowAPI.getSession() || {};
-
-  let allTasks = [];
-
-  try {
-    allTasks = await TaskFlowAPI.getTasks();
-  } catch (error) {
-    window.TaskFlowApp?.showToast(error.message, "error");
-  }
-
-  const setText = (id, value) => {
-    const element = document.getElementById(id);
-
-    if (element) {
-      element.textContent = value;
-    }
-  };
-
-  // UPDATE DASHBOARD STATISTICS
-  const renderStatistics = () => {
-    const stats = TaskFlowAPI.computeStats(allTasks);
-
-    setText("welcomeUserName", session.name || "User");
-
-    setText("statTotalTasks", stats.total);
-    setText("statPendingTasks", stats.pending);
-    setText("statCompletedTasks", stats.completed);
-    setText("statCompletionRate", `${stats.completionRate}%`);
-
-    setText(
-      "dashboardProgressBadge",
-      `${stats.completionRate}% Complete`
-    );
-
-    setText(
-      "dashboardProgressText",
-      `${stats.completionRate}%`
-    );
-
-    setText(
-      "dashboardProgressDesc",
-      `${stats.completed} of ${stats.total} tasks completed`
-    );
-
-    const progress = document.getElementById(
-      "dashboardProgressFill"
-    );
-
-    if (progress) {
-      const percentage = Math.min(
-        100,
-        Math.max(0, Number(stats.completionRate) || 0)
-      );
-
-      progress.style.width = `${percentage}%`;
-      progress.setAttribute("aria-valuenow", percentage);
-    }
-  };
-
-  // RENDER RECENT TASKS
-  const renderRecentTasks = () => {
-    const list = document.getElementById("recentTasksList");
-
-    if (!list) return;
-
-    const priorityFilter = document.getElementById(
-      "recentPriorityFilter"
-    );
-
-    const selectedPriority = priorityFilter
-      ? priorityFilter.value.toLowerCase()
-      : "all";
-
-    // FILTER TASKS BY PRIORITY
-    const filteredTasks = allTasks.filter(task => {
-      if (selectedPriority === "all") {
-        return true;
-      }
-
-      const taskPriority = String(
-        task.priority || "medium"
-      ).toLowerCase();
-
-      return taskPriority === selectedPriority;
-    });
-
-    // SHOW LATEST FIVE MATCHING TASKS
-    const recentTasks = filteredTasks.slice(0, 5);
-
-    list.replaceChildren();
-
-    if (recentTasks.length === 0) {
-      const emptyMessage = document.createElement("p");
-
-      emptyMessage.className = "recent-tasks-empty";
-
-      emptyMessage.textContent =
-        selectedPriority === "all"
-          ? "No tasks yet. Add your first task!"
-          : `No ${selectedPriority}-priority tasks found.`;
-
-      list.appendChild(emptyMessage);
-      return;
-    }
-
-    recentTasks.forEach(task => {
-      const item = document.createElement("div");
-
-      item.className = "recent-task-item";
-
-      // TASK TITLE
-      const title = document.createElement("span");
-
-      title.className = "recent-task-title";
-      title.textContent = task.title || "Untitled Task";
-
-      // TASK DETAILS
-      const details = document.createElement("div");
-
-      details.className = "recent-task-details";
-
-      // PRIORITY BADGE
-      const priority = document.createElement("span");
-
-      const priorityValue = String(
-        task.priority || "medium"
-      ).toLowerCase();
-
-      const validPriorities = ["high", "medium", "low"];
-
-      const safePriority = validPriorities.includes(priorityValue)
-        ? priorityValue
-        : "medium";
-
-      priority.className =
-        `task-priority priority-${safePriority}`;
-
-      priority.textContent =
-        safePriority.charAt(0).toUpperCase() +
-        safePriority.slice(1);
-
-      // STATUS BADGE
-      const status = document.createElement("span");
-
-      status.className = "recent-task-status";
-
-      status.textContent = String(
-        task.status || "pending"
-      ).replace(/_/g, " ");
-
-      details.append(priority, status);
-
-      item.append(title, details);
-
-      list.appendChild(item);
-    });
-  };
-
-  // PRIORITY FILTER EVENT LISTENER
-  const priorityFilter = document.getElementById(
-    "recentPriorityFilter"
-  );
-
-  if (priorityFilter) {
-    priorityFilter.addEventListener("change", renderRecentTasks);
-  }
-
-  // INITIAL RENDER
-  renderStatistics();
-  renderRecentTasks();
-});
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const store = window.TaskFlowStore;
+  const today = new Date();
+  const dateKey = (date) => { const d = new Date(date); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+  const parseDate = (value) => value ? new Date(`${value}T00:00:00`) : null;
+  const isCompleted = (task) => String(task.status || '').toLowerCase() === 'completed';
+  const priority = (task) => String(task.priority || 'medium').toLowerCase();
+  const fmtDue = (date) => date ? date.toLocaleDateString(undefined,{month:'short',day:'numeric'}) : 'No due date';
+  const safe = (value) => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  function renderIcons(){ window.lucide?.createIcons(); }
+  function clock(){ const now = new Date(); $('currentDate').textContent = now.toLocaleDateString(undefined,{weekday:'long',year:'numeric',month:'long',day:'numeric'}); $('currentTime').textContent = now.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit',second:'2-digit'}); const hour=now.getHours(); $('greetingTitle').textContent=`Good ${hour<12?'morning':hour<17?'afternoon':'evening'}, ${userName()}!`; }
+  function sessionInfo(){try{return JSON.parse(sessionStorage.getItem('taskflow_session')||localStorage.getItem('taskflow_session')||'{}')}catch{return {}}}
+  function userName(){const s=sessionInfo(); return s.name||s.fullName||s.username||'there';}
+  function setupProfile(){const s=sessionInfo(); const name=s.name||s.fullName||s.username||'Demo User'; const role=s.role||'TaskFlow User'; $('userName').textContent=name; $('userRole').textContent=role; $('userAvatar').textContent=name.split(/\s+/).map(x=>x[0]).slice(0,2).join('').toUpperCase(); $('profileTrigger').addEventListener('click',()=>{const expanded=$('profileTrigger').getAttribute('aria-expanded')==='true';$('profileTrigger').setAttribute('aria-expanded',String(!expanded));$('profileMenu').hidden=expanded;}); $('profileMenuLink').addEventListener('click',e=>{ /* navigate to profile.html */ }); document.addEventListener('click',e=>{if(!e.target.closest('.sidebar-footer')){$('profileMenu').hidden=true;$('profileTrigger').setAttribute('aria-expanded','false');}}); }
+  function tasks(){return store?.getTasks?.()||[];}
+  function due(task){return parseDate(task.dueDate||task.due_date);}
+  function overdue(task){const d=due(task);return d && dateKey(d)<dateKey(new Date())&&!isCompleted(task);}
+  function renderMetrics(all){const done=all.filter(isCompleted).length;const pending=all.length-done;const over=all.filter(overdue).length; $('metricTotal').textContent=all.length;$('metricPending').textContent=pending;$('metricCompleted').textContent=done;$('metricOverdue').textContent=over;}
+  function renderOverview(all){const done=all.filter(isCompleted).length;const pending=all.length-done;const total=Math.max(1,all.length);const doneDeg=done/total*360;const colors=all.length?`conic-gradient(#2563EB 0deg ${pending/total*360}deg,#10B981 ${pending/total*360}deg 360deg)`:'conic-gradient(#E5E7EB 0deg 360deg)'; $('taskDonut').style.background=colors; $('donutTotal').textContent=all.length; $('chartLegend').innerHTML=`<div class="legend-row"><span class="legend-dot" style="background:#2563EB"></span><span class="legend-label">In progress</span><span class="legend-value">${pending} (${Math.round(pending/total*100)}%)</span></div><div class="legend-row"><span class="legend-dot" style="background:#10B981"></span><span class="legend-label">Completed</span><span class="legend-value">${done} (${Math.round(done/total*100)}%)</span></div>`; if(!all.length){$('chartLegend').innerHTML='<p class="upcoming-empty">Your task overview will appear here once you add tasks.</p>';}}
+  function renderToday(all){const dueToday=all.filter(t=>due(t)&&dateKey(due(t))===dateKey(new Date())&&!isCompleted(t));$('todaySubtitle').textContent=`${dueToday.length} task${dueToday.length===1?'':'s'} scheduled for today`;const host=$('todayTasks');if(!dueToday.length){host.innerHTML=`<div class="empty-state"><div class="empty-state-icon"><i data-lucide="calendar-check"></i></div><strong>Nothing scheduled for today</strong><p>You're all caught up. Want to plan something?</p><a class="btn btn-primary" href="add-task.html?dueDate=${dateKey(new Date())}" id="quickCreateToday"><i data-lucide="plus"></i>Create task</a></div>`;}else{host.innerHTML=dueToday.slice(0,4).map(t=>`<div class="today-task-row"><span class="priority-line priority-${priority(t)}"></span><input class="task-check" type="checkbox" aria-label="Complete ${safe(t.title)}" data-complete-id="${safe(t.id)}"><span class="today-title" title="${safe(t.title)}">${safe(t.title)}</span><span class="priority-badge ${priority(t)}">${priority(t)[0].toUpperCase()+priority(t).slice(1)}</span><span class="today-date"><i data-lucide="calendar"></i>Today</span></div>`).join('');}}
+  function renderUpcoming(all){const upcoming=all.filter(t=>!isCompleted(t)&&due(t)&&dateKey(due(t))>=dateKey(new Date())).sort((a,b)=>due(a)-due(b)).slice(0,4);const host=$('upcomingList');if(!upcoming.length){host.innerHTML='<p class="upcoming-empty">No upcoming deadlines. You have room to plan ahead.</p>';return;}host.innerHTML=upcoming.map(t=>{const d=due(t);return `<div class="upcoming-row"><div class="deadline-date"><div class="month">${d.toLocaleDateString(undefined,{month:'short'})}</div><div class="day">${d.getDate()}</div></div><div><div class="deadline-title">${safe(t.title)}</div><div class="deadline-due">${dateKey(d)===dateKey(new Date())?'Due today':fmtDue(d)}</div></div><span class="priority-badge ${priority(t)}">${priority(t)[0].toUpperCase()+priority(t).slice(1)}</span></div>`}).join('');}
+  function renderActivity(all){const days=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days.push(d);}const counts=days.map(d=>{const key=dateKey(d);const created=all.filter(t=>t.createdAt&&dateKey(new Date(t.createdAt))===key).length;const completed=all.filter(t=>t.completedAt&&dateKey(new Date(t.completedAt))===key).length;return {day:d,created,completed};});const max=Math.max(1,...counts.map(x=>x.created+x.completed));$('weeklyChart').innerHTML=counts.map(x=>{const cH=Math.max(0,x.created/max*100);const dH=Math.max(0,x.completed/max*100);return `<div class="chart-day"><div class="bar-stack"><div class="bar-created" style="height:${cH}%"></div><div class="bar-completed" style="height:${dH}%"></div></div><span class="chart-day-label">${x.day.toLocaleDateString(undefined,{weekday:'short'})}</span></div>`}).join('');}
+  function refresh(){const all=tasks();renderMetrics(all);renderOverview(all);renderToday(all);renderUpcoming(all);renderActivity(all);renderIcons();}
+  function setupSidebar(){const layout=$('appLayout');$('sidebarCollapseBtn')?.addEventListener('click',()=>layout.classList.toggle('sidebar-collapsed'));$('hamburgerBtn')?.addEventListener('click',()=>{$('sidebar').classList.toggle('open');$('sidebarOverlay').classList.toggle('active');});$('sidebarOverlay')?.addEventListener('click',()=>{$('sidebar').classList.remove('open');$('sidebarOverlay').classList.remove('active');});}
+  document.addEventListener('change',e=>{const input=e.target.closest('[data-complete-id]');if(!input)return;const t=store.getTaskById(input.dataset.completeId);if(t){store.updateTask(t.id,{status:'completed',completedAt:new Date().toISOString()});refresh();window.TaskFlowApp?.showToast('Task completed!');}});
+  document.addEventListener('DOMContentLoaded',()=>{if(!store)return;setupProfile();setupSidebar();clock();setInterval(clock,1000);refresh();});
+})();
