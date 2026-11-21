@@ -1,55 +1,50 @@
-# TaskFlow Backend (FastAPI + PostgreSQL)
+# TaskFlow Backend (FastAPI + SQLAlchemy)
 
-## 1. Database
-Uses the existing `database/schema` as-is (no changes needed). Admin approval is stored in the `role` column: `user`, `admin`, `pending_admin`, `rejected_admin`.
+## Requirements
+- Python 3.10+ (Python 3.12/3.13 recommended)
+- SQLite for local use (bundled with Python); PostgreSQL is optional.
 
-## 2. Install
-```bash
+## Windows setup
+From the project root:
+
+```bat
 cd backend
-python -m venv venv
-venv\Scripts\activate        # Windows   (macOS/Linux: source venv/bin/activate)
+python -m venv .venv
+.venv\Scripts\activate
+python -m pip install --upgrade pip
 pip install -r requirements.txt
+copy .env.example .env
 ```
 
-## 3. Configure
-Copy `.env.example` to `.env` and fill in:
-- `DATABASE_URL` - your PostgreSQL password
-- `JWT_SECRET` - required, 32+ random characters:
-  `python -c "import secrets; print(secrets.token_urlsafe(48))"`
-- `ALLOWED_ORIGINS` - the URL your frontend runs on (e.g. VS Code Live Server = `http://127.0.0.1:5500`)
-- `ADMIN_EMAIL` / `ADMIN_PASSWORD` - creates the FIRST admin on startup. Remove the password from `.env` afterwards.
+Edit `.env` and set a unique `JWT_SECRET` (generate with `python -c "import secrets; print(secrets.token_urlsafe(48))"`) and a strong `MASTER_ADMIN_PASSWORD`. The default database is a persistent SQLite file in `backend/todo_app.db`. If you use PostgreSQL, set `DATABASE_URL` to the correct connection string. A PostgreSQL connection failure is reported instead of silently switching databases.
 
-## 4. Run
-```bash
+## Initialize
+
+```bat
+python init_db.py
+```
+
+This creates the tables and seeds the configured Master Admin. Optional demo accounts/tasks can be created by setting `SEED_DEMO_ACCOUNTS=true` and demo credentials in `.env`. Demo accounts are disabled by default.
+
+## Run API
+
+```bat
 uvicorn main:app --reload
 ```
-API docs (development only): http://127.0.0.1:8000/docs
 
-Frontend: open `Frontend/index.html` with Live Server. The API address is `API_BASE` at the top of `Frontend/js/api.js`.
+- API: http://127.0.0.1:8000
+- Swagger: http://127.0.0.1:8000/docs (development only)
+- Health: http://127.0.0.1:8000/api/health
 
-## Security summary
-- Passwords are hashed with **bcrypt** (salted, 12 rounds). Plain passwords are never stored or returned.
-- Login returns a signed JWT; every task/admin route reads the user from the token. The client can no longer send a `user_id`.
-- Users only see/change their own tasks; other people's tasks return 404.
-- Role is decided by the server. Admin sign-ups are `pending_admin` until an active admin approves them.
-- Admin routes (`/api/admin/*`) return 403 for non-admins.
-- Login is rate limited (5 failures / 15 min per IP + email) and constant-time for unknown emails.
-- CORS only allows `ALLOWED_ORIGINS`. Unknown JSON fields are rejected.
+Open `Frontend/index.html` using VS Code Live Server (recommended). Configure `ALLOWED_ORIGINS` if your Live Server port differs. The frontend API base defaults to `http://127.0.0.1:8000` and can be overridden before loading `js/api.js` with `window.TASKFLOW_API_BASE`.
 
-## Endpoints
-| Method | Endpoint | Access |
-|---|---|---|
-| POST | `/api/auth/register` | public |
-| POST | `/api/auth/register-admin` | public (creates a pending request) |
-| POST | `/api/auth/login` | public |
-| GET / PUT | `/api/auth/me` | logged in |
-| POST | `/api/auth/change-password` | logged in |
-| POST / GET | `/api/tasks` | logged in (own tasks) |
-| GET / PUT / DELETE | `/api/tasks/{id}` | logged in (own tasks) |
-| GET | `/api/admin/users`, `/api/admin/tasks`, `/api/admin/admin-requests` | admin |
-| POST | `/api/admin/admin-requests/{user_id}/approve` or `reject` | admin |
+## Optional SMTP email
+Set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, and `SMTP_FROM` in `.env` to enable email notifications for administrator requests and approval verification codes. Without SMTP, the Master Admin approval screen displays the verification code for manual delivery.
 
-Send the token as `Authorization: Bearer <token>`.
-
-## Before real deployment
-Use HTTPS, set `APP_ENV=production`, set `ALLOWED_ORIGINS` to the real frontend URL, and consider moving the token to an httpOnly cookie. The login rate limiter is in-memory (per process).
+## Security notes
+- Passwords are hashed using bcrypt.
+- Access tokens are signed JWTs and stored in browser session storage.
+- Users can only access their own tasks/categories.
+- Admin and Master Admin endpoints enforce server-side role checks.
+- Login attempts are rate-limited in-memory per server process.
+- Use HTTPS, a strong secret, a configured mail provider, and a managed database before deployment.

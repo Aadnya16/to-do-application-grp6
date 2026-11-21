@@ -1,70 +1,50 @@
--- todo_app database setup
+-- Optional PostgreSQL reference schema for TaskFlow.
+-- The application normally creates these tables through SQLAlchemy Base.metadata.create_all.
+-- If using PostgreSQL manually, create/connect to the taskflow database first.
 
-CREATE DATABASE to-do-app;
-
--- user table 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     user_id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    email VARCHAR(150) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL
+    email VARCHAR(150) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    role VARCHAR(20) NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin', 'master_admin')),
+    status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'pending', 'approved', 'rejected')),
+    verification_code VARCHAR(6),
+    verification_expires_at TIMESTAMP,
+    reason TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    approved_at TIMESTAMP
 );
 
-ALTER TABLE users
-ADD COLUMN role VARCHAR(20) NOT NULL;
+CREATE INDEX IF NOT EXISTS ix_users_email ON users(email);
 
-
-
---categories table
-CREATE TABLE categories (
+CREATE TABLE IF NOT EXISTS categories (
     category_id SERIAL PRIMARY KEY,
-    user_id INT NOT NULL,
+    user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     category_name VARCHAR(100) NOT NULL,
-
-    CONSTRAINT fk_category_user
-    FOREIGN KEY (user_id)
-    REFERENCES users(user_id)
-    ON DELETE CASCADE,
-
-    CONSTRAINT unique_user_category
-    UNIQUE (user_id, category_name),
-
-    CONSTRAINT unique_category_owner
-    UNIQUE (category_id, user_id)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- task table
-CREATE TABLE tasks (
+CREATE INDEX IF NOT EXISTS ix_categories_user_id ON categories(user_id);
+
+CREATE TABLE IF NOT EXISTS tasks (
     task_id SERIAL PRIMARY KEY,
-    user_id INT NOT NULL,
-    category_id INT,
+    user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    category_id INTEGER REFERENCES categories(category_id) ON DELETE SET NULL,
     title VARCHAR(255) NOT NULL,
     description TEXT,
-    status VARCHAR(20) NOT NULL DEFAULT 'pending',
-    priority VARCHAR(20) NOT NULL DEFAULT 'medium',
+    status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'completed')),
+    priority VARCHAR(20) NOT NULL DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
     due_date DATE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT fk_task_user
-    FOREIGN KEY (user_id)
-    REFERENCES users(user_id)
-    ON DELETE CASCADE,
-
-    CONSTRAINT fk_task_category
-    FOREIGN KEY (category_id, user_id)
-    REFERENCES categories(category_id, user_id)
-    ON DELETE SET NULL (category_id),
-
-    CONSTRAINT check_task_status
-    CHECK (status IN ('pending', 'in_progress', 'completed')),
-
-    CONSTRAINT check_task_priority
-    CHECK (priority IN ('low', 'medium', 'high'))
+    updated_at TIMESTAMP,
+    completed_at TIMESTAMP
 );
 
+CREATE INDEX IF NOT EXISTS ix_tasks_user_id ON tasks(user_id);
+CREATE INDEX IF NOT EXISTS ix_tasks_category_id ON tasks(category_id);
+CREATE INDEX IF NOT EXISTS ix_tasks_status ON tasks(status);
 
--- to check whether all tables are created 
-SELECT table_name
-FROM information_schema.tables
-WHERE table_schema = 'public'
-AND table_type = 'BASE TABLE';
+-- Verify tables:
+-- SELECT table_name FROM information_schema.tables
+-- WHERE table_schema = 'public' AND table_type = 'BASE TABLE';

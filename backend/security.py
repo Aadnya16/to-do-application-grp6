@@ -13,7 +13,7 @@ from fastapi import HTTPException
 load_dotenv()
 
 JWT_SECRET = os.getenv("JWT_SECRET", "")
-if len(JWT_SECRET) < 32:
+if len(JWT_SECRET) < 32 or JWT_SECRET.startswith("REPLACE_WITH") or JWT_SECRET == "change-me":
     raise RuntimeError(
         "JWT_SECRET is missing or too short (need 32+ characters). Set it in backend/.env. "
         "Generate one: python -c \"import secrets; print(secrets.token_urlsafe(48))\""

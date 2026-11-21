@@ -909,3 +909,11 @@ body { font-family:'Inter',sans-serif; }
 .task-card.priority-medium:not(.completed-card) { border-left:3px solid #D97706!important; }
 .task-card.priority-low:not(.completed-card) { border-left:3px solid #059669!important; }
 .task-card.completed-card { border-left:1px solid #e2e6ec!important; }
+
+/* Integration additions: accessible labels, sorting and category UI */
+.sr-only { position:absolute!important; width:1px!important; height:1px!important; padding:0!important; margin:-1px!important; overflow:hidden!important; clip:rect(0,0,0,0)!important; white-space:nowrap!important; border:0!important; }
+.sort-control { min-width:150px; }
+.sort-control .form-control { height:44px; min-width:150px; padding:0 11px; background:#fff; }
+.filter-group-block select.form-control { width:100%; height:38px; padding:7px 10px; }
+.task-category-pill { background:#f1f5f9; color:#475569; }
+.filter-group-block #deleteCategoryBtn { margin-top:8px; }

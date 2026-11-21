@@ -1,4 +1,7 @@
 (() => {
+  "use strict";
+
+  const api = window.TaskFlowAPI;
   const $ = (selector) => document.querySelector(selector);
   const form = $('#addTaskForm');
   const title = $('#taskTitle');
@@ -11,11 +14,31 @@
   const previewDescription = $('#previewDescription');
   const previewDue = $('#previewDue');
   const previewPriority = $('#previewPriority');
+  const categorySelect = $('#taskCategory');
+  const manageCategoriesBtn = $('#manageCategoriesBtn');
 
-  const getTodayLocal = () => {
-    const now = new Date();
-    return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-  };
+  async function loadCategories() {
+    if (!categorySelect) return;
+    try {
+      const categories = await api.getCategories();
+      categorySelect.innerHTML = '<option value="">No category</option>' + categories.map(c => `<option value="${c.category_id}">${escapeHtml(c.category_name)}</option>`).join('');
+    } catch (err) { toast(err.message || 'Could not load categories.', 'error'); }
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  }
+
+  manageCategoriesBtn?.addEventListener('click', async () => {
+    const name = prompt('Enter a new category name:');
+    if (!name || !name.trim()) return;
+    try {
+      await api.createCategory(name.trim());
+      await loadCategories();
+      categorySelect.value = [...categorySelect.options].find(o => o.text.toLowerCase() === name.trim().toLowerCase())?.value || '';
+      toast('Category added.', 'success');
+    } catch (err) { toast(err.message || 'Could not create category.', 'error'); }
+  });
 
   function updatePreview() {
     const trimmedTitle = title.value.trim();
@@ -43,6 +66,10 @@
   }
 
   function toast(message, type = 'success') {
+    if (window.TaskFlowApp?.showToast) {
+      window.TaskFlowApp.showToast(message, type);
+      return;
+    }
     const container = $('#toastContainer');
     if (!container) return;
     const item = document.createElement('div');
@@ -61,7 +88,8 @@
   dueDate.addEventListener('change', updatePreview);
   document.querySelectorAll('input[name="priority"]').forEach(input => input.addEventListener('change', updatePreview));
 
-  form.addEventListener('submit', (event) => {
+  // Form submit -> Real backend API
+  form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const taskTitle = title.value.trim();
     if (!taskTitle) {
@@ -71,33 +99,43 @@
     }
     setTitleError();
 
-    if (!window.TaskFlowStore || typeof TaskFlowStore.addTask !== 'function') {
-      toast('Task storage is unavailable. Please refresh and try again.', 'error');
-      return;
+    const submitBtn = $('#createTaskBtn');
+    const origHtml = submitBtn ? submitBtn.innerHTML : '';
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Creating task…';
     }
 
-    const created = TaskFlowStore.addTask({
-      title: taskTitle,
-      description: description.value.trim(),
-      dueDate: dueDate.value,
-      priority: document.querySelector('input[name="priority"]:checked')?.value || 'medium',
-      status: 'pending'
-    });
+    try {
+      await api.createTask({
+        title: taskTitle,
+        description: description.value.trim() || '',
+        dueDate: dueDate.value || null,
+        priority: document.querySelector('input[name="priority"]:checked')?.value || 'medium',
+        status: 'pending',
+        categoryId: categorySelect?.value || null
+      });
 
-    if (!created) {
-      toast('Unable to create task. Please make sure you are logged in as a User.', 'error');
-      return;
+      toast('Task created successfully!', 'success');
+      form.reset();
+      dueDate.value = '';
+      if (categorySelect) categorySelect.value = '';
+      const mediumRadio = document.querySelector('input[name="priority"][value="medium"]');
+      if (mediumRadio) mediumRadio.checked = true;
+      updatePreview();
+      title.focus();
+    } catch (err) {
+      toast(err.message || 'Unable to create task on the server.', 'error');
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = origHtml;
+        if (window.lucide) lucide.createIcons();
+      }
     }
-
-    toast('Task created successfully!', 'success');
-    form.reset();
-    dueDate.value = '';
-    document.querySelector('input[name="priority"][value="medium"]').checked = true;
-    updatePreview();
-    title.focus();
   });
 
-  // Set up the page shell: date/time, sidebar, profile dropdown, logout modal.
+  // Shell controls
   function updateClock() {
     const now = new Date();
     const dateEl = $('#currentDate');
@@ -110,8 +148,8 @@
 
   const sidebar = $('#sidebar');
   const overlay = $('#sidebarOverlay');
-  const session = (() => { try { return JSON.parse(sessionStorage.getItem('taskflow_session') || 'null'); } catch { return null; } })();
-  if (!session || session.role !== 'user') {
+  const session = api?.getSession?.();
+  if (!session) {
     location.replace('index.html');
     return;
   }
@@ -148,15 +186,13 @@
   const logoutModal = $('#logoutModalOverlay');
   document.querySelectorAll('.btn-logout-trigger').forEach(button => button.addEventListener('click', () => logoutModal?.classList.add('show')));
   $('#cancelLogoutBtn')?.addEventListener('click', () => logoutModal?.classList.remove('show'));
-  $('#confirmLogoutBtn')?.addEventListener('click', () => {
-    sessionStorage.removeItem('taskflow_session');
-    sessionStorage.removeItem('taskflow_auth');
-    localStorage.removeItem('taskflow_session');
-    location.href = 'index.html';
-  });
+  $('#confirmLogoutBtn')?.addEventListener('click', () => api.logout());
   logoutModal?.addEventListener('click', event => { if (event.target === logoutModal) logoutModal.classList.remove('show'); });
   document.addEventListener('keydown', event => { if (event.key === 'Escape') { logoutModal?.classList.remove('show'); sidebar?.classList.remove('open'); overlay?.classList.remove('active'); } });
 
+  loadCategories();
+  const requestedDueDate = new URLSearchParams(location.search).get('dueDate');
+  if (requestedDueDate && /^\d{4}-\d{2}-\d{2}$/.test(requestedDueDate)) dueDate.value = requestedDueDate;
   updatePreview();
   if (window.lucide) lucide.createIcons();
 })();

@@ -88,6 +88,15 @@
                 placeholder="Search tasks by title or description..." aria-label="Search tasks">
             </div>
 
+            <div class="sort-control">
+              <label for="taskSortSelect" class="sr-only">Sort tasks</label>
+              <select id="taskSortSelect" class="form-control" aria-label="Sort tasks">
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+                <option value="due_date">Due date</option>
+                <option value="priority">Priority</option>
+              </select>
+            </div>
             <div class="filter-control">
               <button type="button" class="filter-button" id="filterToggleBtn"
                 aria-expanded="false" aria-controls="filterPanel">
@@ -103,8 +112,14 @@
                   <h4>Status</h4>
                   <div class="filter-options" id="statusFilterOptions">
                     <button type="button" class="filter-option" data-status-filter="pending">Pending</button>
+                    <button type="button" class="filter-option" data-status-filter="in_progress">In Progress</button>
                     <button type="button" class="filter-option" data-status-filter="completed">Completed</button>
                   </div>
+                </div>
+                <div class="filter-group-block">
+                  <h4>Category</h4>
+                  <select id="categoryFilter" class="form-control"><option value="">All categories</option></select>
+                  <button type="button" id="deleteCategoryBtn" class="filter-option" hidden>Delete selected category</button>
                 </div>
                 <div class="filter-group-block">
                   <h4>Priority</h4>
@@ -168,10 +183,14 @@
           <textarea id="editTaskDesc" class="form-control" rows="3"></textarea>
         </div>
 
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label for="editTaskCategory">Category</label>
+          <select id="editTaskCategory" class="form-control"><option value="">No category</option></select>
+        </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
           <div class="form-group" style="margin-bottom: 0;">
             <label for="editTaskDueDate">Due Date</label>
-            <input type="date" id="editTaskDueDate" class="form-control" required>
+            <input type="date" id="editTaskDueDate" class="form-control">
           </div>
           <div class="form-group" style="margin-bottom: 0;">
             <label for="editTaskPriority">Priority</label>
@@ -223,7 +242,7 @@
   <div class="toast-container" id="toastContainer"></div>
 
   <!-- Scripts -->
-  <script src="js/demo-data.js"></script><script src="js/demo-auth.js"></script><script src="js/mock-data.js"></script>
+  <script src="js/api.js"></script>
   <script src="js/app.js"></script>
   <script src="js/task-list.js"></script>
 </body>

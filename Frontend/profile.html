@@ -97,6 +97,40 @@
           </div>
         </section>
 
+        <section class="profile-details-section">
+          <div class="section-heading">
+            <div><h3>Update profile</h3><p>Update your display name or account password.</p></div>
+            <span class="section-icon"><i data-lucide="user-pen"></i></span>
+          </div>
+          <div class="profile-details-card profile-edit-card">
+            <form id="updateProfileForm" novalidate>
+              <div class="profile-edit-grid">
+                <div class="profile-form-group">
+                  <label for="editName">Full name</label>
+                  <input type="text" id="editName" class="form-control" placeholder="Enter your full name" required>
+                </div>
+                <div class="profile-form-group">
+                  <label for="currentPassword">Current password <span class="optional-hint">(required only if changing password)</span></label>
+                  <input type="password" id="currentPassword" class="form-control" placeholder="Enter current password">
+                </div>
+                <div class="profile-form-group">
+                  <label for="editPassword">New password <span class="optional-hint">(leave blank to keep current)</span></label>
+                  <input type="password" id="editPassword" class="form-control" placeholder="At least 6 characters" minlength="6">
+                </div>
+                <div class="profile-form-group">
+                  <label for="editConfirm">Confirm new password</label>
+                  <input type="password" id="editConfirm" class="form-control" placeholder="Re-enter new password" minlength="6">
+                </div>
+              </div>
+              <div class="profile-form-actions">
+                <button type="submit" class="btn btn-primary" id="saveProfileBtn">
+                  <i data-lucide="save"></i> Save changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+
         <div class="profile-footnote"><i data-lucide="info"></i><span>This page displays the details of the account currently signed in.</span></div>
       </main>
     </div>
@@ -115,6 +149,6 @@
   </div>
   <div class="toast-container" id="toastContainer" aria-live="polite"></div>
 
-  <script src="js/demo-data.js"></script><script src="js/demo-auth.js"></script><script src="js/profile.js"></script>
+  <script src="js/api.js"></script><script src="js/app.js"></script><script src="js/profile.js"></script>
 </body>
 </html>

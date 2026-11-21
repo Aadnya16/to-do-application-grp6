@@ -52,7 +52,7 @@
       </section>
       <section class="panel table-panel" id="administrators">
         <div class="panel-heading"><div><h3>Administrators</h3><p>Accounts with admin access to monitor the application.</p></div><button class="table-action" type="button" id="refreshBtn"><i data-lucide="refresh-cw"></i>Refresh</button></div>
-        <div class="table-scroll"><table><thead><tr><th>Administrator</th><th>Email</th><th>Account status</th><th>Access granted</th></tr></thead><tbody id="adminTableBody"></tbody></table></div>
+        <div class="table-scroll"><table><thead><tr><th>Administrator</th><th>Email</th><th>Account status</th><th>Access granted</th><th>Actions</th></tr></thead><tbody id="adminTableBody"></tbody></table></div>
         <div class="empty-table" id="adminEmpty" hidden><i data-lucide="shield"></i><span>No administrator accounts to display yet.</span></div>
       </section>
       <section class="panel table-panel users-panel" id="users">
@@ -67,5 +67,5 @@
 <div class="modal-overlay" id="decisionModal" aria-hidden="true"><div class="modal decision-modal" role="dialog" aria-modal="true" aria-labelledby="decisionTitle"><span class="decision-icon" id="decisionIcon"><i data-lucide="shield-check"></i></span><h3 class="modal-title" id="decisionTitle">Approve administrator?</h3><p class="modal-body" id="decisionBody">This request will be updated.</p><div class="modal-actions"><button class="btn btn-outline btn-sm" type="button" id="decisionCancel">Cancel</button><button class="btn btn-primary btn-sm" type="button" id="decisionConfirm">Confirm</button></div></div></div>
 <div class="modal-overlay" id="logoutModalOverlay" aria-hidden="true"><div class="modal"><h3 class="modal-title">Confirm logout</h3><div class="modal-body">Are you sure you want to end your current session?</div><div class="modal-actions"><button class="btn btn-outline btn-sm" type="button" id="cancelLogoutBtn">Cancel</button><button class="btn btn-danger btn-sm" type="button" id="confirmLogoutBtn">Yes, logout</button></div></div></div>
 <div class="toast-container" id="toastContainer" aria-live="polite"></div>
-<script src="js/demo-data.js"></script><script src="js/demo-auth.js"></script><script src="js/master-admin-dashboard.js"></script>
+<script src="js/api.js"></script><script src="js/master-admin-dashboard.js"></script>
 </body></html>

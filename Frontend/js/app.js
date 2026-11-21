@@ -45,28 +45,45 @@
     document.addEventListener("DOMContentLoaded", () => {
         const page = location.pathname.split("/").pop();
 
-        let session = null;
-
-        try {
-            session = JSON.parse(
-                sessionStorage.getItem("taskflow_session") || "null"
-            );
-        } catch (error) {
-            console.error("Could not read session:", error);
+        let session = window.TaskFlowAPI ? window.TaskFlowAPI.getSession() : null;
+        if (!session) {
+            try {
+                session = JSON.parse(
+                    sessionStorage.getItem("taskflow_session") || localStorage.getItem("taskflow_session") || "null"
+                );
+            } catch (error) {
+                console.error("Could not read session:", error);
+            }
         }
 
         const protectedUserPages = [
             "dashboard.html",
-            "add-task.html",
-            "profile.html"
+            "add-task.html"
         ];
 
-        if (
-            protectedUserPages.includes(page) &&
-            (!session || session.role !== "user")
-        ) {
-            location.replace("index.html");
-            return;
+        if (!session) {
+            const protectedPages = [
+                ...protectedUserPages,
+                "profile.html",
+                "task-list.html",
+                "admin-dashboard.html",
+                "admin-task-overview.html",
+                "master-admin-dashboard.html"
+            ];
+            if (protectedPages.includes(page)) {
+                location.replace("index.html");
+                return;
+            }
+        }
+
+        if (session) {
+            if (
+                protectedUserPages.includes(page) &&
+                session.role !== "user"
+            ) {
+                location.replace(session.role === "master-admin" ? "master-admin-dashboard.html" : "admin-dashboard.html");
+                return;
+            }
         }
 
         // Task List is shared: regular users see their tasks; admins use it as Task Overview.
@@ -125,9 +142,13 @@
         });
 
         $("#confirmLogoutBtn")?.addEventListener("click", () => {
-            sessionStorage.removeItem("taskflow_session");
-            sessionStorage.removeItem("taskflow_auth");
-            location.href = "index.html";
+            if (window.TaskFlowAPI) {
+                window.TaskFlowAPI.logout();
+            } else {
+                sessionStorage.removeItem("taskflow_session");
+                sessionStorage.removeItem("taskflow_auth");
+                location.href = "index.html";
+            }
         });
 
         document.querySelectorAll("[data-target].password-toggle-btn")
