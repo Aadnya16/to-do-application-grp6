@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskFlow — Admin Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/admin-dashboard.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+<div class="app-layout admin-layout" id="appLayout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon"><i data-lucide="square-check-big"></i></div><div class="logo-text">TaskFlow</div><button class="sidebar-collapse-btn" id="sidebarCollapseBtn" type="button" aria-label="Collapse sidebar"><i data-lucide="panel-left-close"></i></button></div>
+    <nav class="sidebar-nav" aria-label="Main navigation">
+      <div class="nav-label">Main Menu</div>
+      <a href="admin-dashboard.html" class="nav-item active"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span><span class="nav-text">Admin Dashboard</span></a>
+      <a href="admin-task-overview.html" class="nav-item"><span class="nav-icon"><i data-lucide="list-checks"></i></span><span class="nav-text">Task Overview</span></a>
+    </nav>
+    <div class="sidebar-footer"><div class="profile-menu-wrap">
+      <button class="profile-trigger" id="profileTrigger" type="button" aria-expanded="false"><span class="user-avatar" id="sidebarAvatar">AD</span><span class="profile-label"><span class="user-name" id="sidebarName">Admin</span><span class="user-role" id="sidebarRole">Administrator</span></span><i data-lucide="chevron-down" class="profile-chevron"></i></button>
+      <div class="profile-menu" id="profileMenu" hidden><a class="profile-menu-item" href="profile.html"><i data-lucide="user-round"></i>Profile</a><button class="profile-menu-item logout-item" type="button" id="logoutTrigger"><i data-lucide="log-out"></i>Logout</button></div>
+    </div></div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <div class="main-content">
+    <header class="topbar"><div class="topbar-left"><button class="hamburger" id="hamburgerBtn" type="button" aria-label="Open navigation"><i data-lucide="menu"></i></button><h1 class="page-title">Admin Dashboard</h1></div><div class="date-time-widget"><div id="currentDateDisplay">Loading date…</div><strong id="currentTimeDisplay">--:--</strong></div></header>
+    <main class="page-content admin-content">
+      <section class="admin-greeting"><div class="greeting-mark"></div><div><h2 id="greetingTitle">Good day!</h2><p>Monitor TaskFlow activity and user progress.</p></div><span class="preview-label"><i data-lucide="eye"></i> Dashboard overview</span></section>
+      <section class="admin-metrics" aria-label="Application summary">
+        <article class="admin-metric-card"><div class="admin-metric-icon blue"><i data-lucide="users"></i></div><div><span class="metric-label">Total users</span><strong id="metricUsers">—</strong><small>Registered accounts</small></div></article>
+        <article class="admin-metric-card"><div class="admin-metric-icon violet"><i data-lucide="clipboard-list"></i></div><div><span class="metric-label">Total tasks</span><strong id="metricTasks">—</strong><small>Across all users</small></div></article>
+        <article class="admin-metric-card"><div class="admin-metric-icon green"><i data-lucide="check-circle-2"></i></div><div><span class="metric-label">Completed</span><strong id="metricCompleted">—</strong><small>Tasks marked complete</small></div></article>
+        <article class="admin-metric-card"><div class="admin-metric-icon amber"><i data-lucide="clock-3"></i></div><div><span class="metric-label">Pending</span><strong id="metricPending">—</strong><small>Still in progress</small></div></article>
+      </section>
+      <section class="admin-main-grid">
+        <article class="dashboard-panel status-panel"><div class="panel-heading"><div><h3>Task status overview</h3><p>Current distribution of tasks</p></div><span class="period-label">All users</span></div><div class="status-chart-area"><div class="status-donut" id="statusDonut"><div class="status-donut-center"><strong id="donutTotal">0</strong><span>Tasks</span></div></div><div class="status-legend" id="statusLegend"></div></div></article>
+        <article class="dashboard-panel activity-panel"><div class="panel-heading"><div><h3>Recent activity</h3><p>Latest task updates across accounts</p></div><span class="period-label">Recent</span></div><div class="recent-activity-list" id="recentActivity"></div></article>
+      </section>
+      <section class="dashboard-panel users-panel"><div class="panel-heading users-heading"><div><h3>Users overview</h3><p>Choose a user to view their task activity log.</p></div><div class="users-search"><i data-lucide="search"></i><input type="search" id="userSearch" placeholder="Search users…" aria-label="Search users"></div></div>
+        <div class="users-table-wrap"><table class="users-table"><thead><tr><th>User</th><th>Total tasks</th><th>Completed</th><th>Pending</th><th>Last activity</th><th></th></tr></thead><tbody id="usersTableBody"></tbody></table></div><div class="users-footer"><span id="usersCount">Showing users</span><span class="users-hint"><i data-lucide="mouse-pointer-click"></i> Select a name to open task logs</span></div>
+      </section>
+      <div class="admin-note"><i data-lucide="info"></i><span>Task activity shown here is based on available task records. Detailed audit history will be available when event logging is connected.</span></div>
+    </main>
+  </div>
+</div>
+<!-- Task log modal -->
+<div class="modal-overlay admin-modal-overlay" id="taskLogModal" aria-hidden="true"><div class="admin-modal" role="dialog" aria-modal="true" aria-labelledby="logModalTitle"><div class="admin-modal-header"><div class="modal-user-avatar" id="logAvatar">DU</div><div class="modal-user-info"><h2 id="logModalTitle">User task logs</h2><p id="logModalEmail"></p></div><button type="button" class="icon-button" id="closeLogModal" aria-label="Close"><i data-lucide="x"></i></button></div><div class="log-summary" id="logSummary"></div><div class="log-modal-content"><div class="log-section-heading"><h3>Task activity</h3><span id="logTaskCount">0 tasks</span></div><div id="userTaskLogs" class="user-task-logs"></div></div></div></div>
+<div class="modal-overlay" id="logoutModalOverlay" aria-hidden="true"><div class="modal"><h3 class="modal-title">Confirm Logout</h3><div class="modal-body">Are you sure you want to end your current session?</div><div class="modal-actions"><button type="button" class="btn btn-outline btn-sm" id="cancelLogoutBtn">Cancel</button><button type="button" class="btn btn-danger btn-sm" id="confirmLogoutBtn">Yes, Logout</button></div></div></div>
+<div class="toast-container" id="toastContainer"></div>
+<script src="js/demo-data.js"></script><script src="js/demo-auth.js"></script><script src="js/mock-data.js"></script><script src="js/app.js"></script><script src="js/admin-dashboard.js"></script>
+</body></html>
