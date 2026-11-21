@@ -1,23 +1,5 @@
-
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     const $ = id => document.getElementById(id);
-
-    // Session belongs in sessionStorage, not localStorage.
-    const readSession = () => {
-        try {
-            return JSON.parse(sessionStorage.getItem("taskflow_session") || "null");
-        } catch {
-            return null;
-        }
-    };
-
-    const readUsers = () => {
-        try {
-            return JSON.parse(localStorage.getItem("taskflow_users") || "[]");
-        } catch {
-            return [];
-        }
-    };
 
     const showMessage = (message, type = "success") => {
         if (window.TaskFlowApp?.showToast) {
@@ -36,13 +18,6 @@ document.addEventListener("DOMContentLoaded", () => {
             .join("")
             .toUpperCase();
 
-    const session = readSession();
-
-    if (!session || !["user", "admin"].includes(session.role)) {
-        location.replace("index.html");
-        return;
-    }
-
     const profileForm = $("profileForm");
     const passwordForm = $("changePasswordForm");
     const nameInput = $("profileName");
@@ -53,41 +28,29 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-    let users = readUsers();
+    if (!TaskFlowAPI.getSession()) {
+        location.replace("index.html");
+        return;
+    }
 
-    const getCurrentUserIndex = () =>
-        users.findIndex(user =>
-            user.email?.toLowerCase() === session.email?.toLowerCase() &&
-            user.role === session.role &&
-            user.status === "active"
-        );
+    // The profile always comes from the server, never from browser storage.
+    let user;
 
-    let currentIndex = getCurrentUserIndex();
-
-    if (currentIndex === -1) {
-        sessionStorage.removeItem("taskflow_session");
-        location.replace("login.html?mode=user-login");
+    try {
+        user = await TaskFlowAPI.getMe();
+    } catch (error) {
+        showMessage(error.message, "error");
         return;
     }
 
     const updateDisplay = () => {
-        const name = session.name || "User";
-
-        if ($("profileDisplayName")) {
-            $("profileDisplayName").textContent = name;
-        }
-
-        if ($("profileDisplayEmail")) {
-            $("profileDisplayEmail").textContent = session.email;
-        }
-
-        if ($("profileAvatar")) {
-            $("profileAvatar").textContent = getInitials(name);
-        }
+        if ($("profileDisplayName")) $("profileDisplayName").textContent = user.name;
+        if ($("profileDisplayEmail")) $("profileDisplayEmail").textContent = user.email;
+        if ($("profileAvatar")) $("profileAvatar").textContent = getInitials(user.name);
 
         if ($("profileRole")) {
             $("profileRole").textContent =
-                session.role === "admin" ? "Administrator" : "User";
+                user.role === "admin" ? "Administrator" : "User";
         }
 
         if ($("profileStatus")) {
@@ -95,31 +58,20 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         document.querySelectorAll(".user-name-display").forEach(element => {
-            element.textContent = name;
+            element.textContent = user.name;
         });
 
         document.querySelectorAll(".user-avatar-display").forEach(element => {
-            element.textContent = getInitials(name);
+            element.textContent = getInitials(user.name);
         });
-
-        // Also update any sidebar elements using these common classes.
     };
 
-    // Load the actual logged-in account.
-    const currentUser = users[currentIndex];
-
-    session.name = currentUser.name;
-    session.email = currentUser.email;
-
-    sessionStorage.setItem("taskflow_session", JSON.stringify(session));
-
-    nameInput.value = currentUser.name || "";
-    emailInput.value = currentUser.email || "";
-
+    nameInput.value = user.name;
+    emailInput.value = user.email;
     updateDisplay();
 
     // UPDATE PROFILE
-    profileForm.addEventListener("submit", event => {
+    profileForm.addEventListener("submit", async event => {
         event.preventDefault();
 
         const name = nameInput.value.trim();
@@ -135,69 +87,25 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        users = readUsers();
-        currentIndex = getCurrentUserIndex();
-
-        if (currentIndex === -1) {
-            showMessage("Account not found. Please log in again.", "error");
-            return;
+        try {
+            user = await TaskFlowAPI.updateProfile(name, email);
+            updateDisplay();
+            showMessage("Profile updated successfully!");
+        } catch (error) {
+            showMessage(error.message, "error");
         }
-
-        const oldEmail = users[currentIndex].email;
-
-        const duplicateEmail = users.some((user, index) =>
-            index !== currentIndex &&
-            user.email?.toLowerCase() === email
-        );
-
-        if (duplicateEmail) {
-            showMessage("This email is already registered.", "error");
-            return;
-        }
-
-        users[currentIndex].name = name;
-        users[currentIndex].email = email;
-
-        localStorage.setItem("taskflow_users", JSON.stringify(users));
-
-        // Preserve task ownership if the user changes their email.
-        if (oldEmail.toLowerCase() !== email) {
-            try {
-                const tasks = JSON.parse(
-                    localStorage.getItem("taskflow_tasks") || "[]"
-                );
-
-                tasks.forEach(task => {
-                    if (task.ownerEmail?.toLowerCase() === oldEmail.toLowerCase()) {
-                        task.ownerEmail = email;
-                    }
-                });
-
-                localStorage.setItem("taskflow_tasks", JSON.stringify(tasks));
-            } catch (error) {
-                console.error("Could not update task ownership:", error);
-            }
-        }
-
-        session.name = name;
-        session.email = email;
-
-        sessionStorage.setItem("taskflow_session", JSON.stringify(session));
-
-        updateDisplay();
-        showMessage("Profile updated successfully!");
     });
 
     // RESET PROFILE FORM
     profileForm.addEventListener("reset", () => {
         setTimeout(() => {
-            nameInput.value = session.name || "";
-            emailInput.value = session.email || "";
+            nameInput.value = user.name;
+            emailInput.value = user.email;
         }, 0);
     });
 
-    // CHANGE PASSWORD
-    passwordForm.addEventListener("submit", event => {
+    // CHANGE PASSWORD (the new password is hashed by the server)
+    passwordForm.addEventListener("submit", async event => {
         event.preventDefault();
 
         const currentPassword = $("currentPassword").value;
@@ -209,23 +117,8 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        users = readUsers();
-        currentIndex = getCurrentUserIndex();
-
-        if (currentIndex === -1) {
-            showMessage("Account not found.", "error");
-            return;
-        }
-
-        const user = users[currentIndex];
-
-        if (user.password !== currentPassword) {
-            showMessage("Current password is incorrect.", "error");
-            return;
-        }
-
-        if (newPassword.length < 6) {
-            showMessage("New password must contain at least 6 characters.", "error");
+        if (newPassword.length < 8 || !/[A-Za-z]/.test(newPassword) || !/\d/.test(newPassword)) {
+            showMessage("New password needs 8+ characters with letters and numbers.", "error");
             return;
         }
 
@@ -234,16 +127,12 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        if (newPassword === currentPassword) {
-            showMessage("Choose a different password.", "error");
-            return;
+        try {
+            await TaskFlowAPI.changePassword(currentPassword, newPassword);
+            passwordForm.reset();
+            showMessage("Password changed successfully!");
+        } catch (error) {
+            showMessage(error.message, "error");
         }
-
-        user.password = newPassword;
-
-        localStorage.setItem("taskflow_users", JSON.stringify(users));
-
-        passwordForm.reset();
-        showMessage("Password changed successfully!");
     });
 });

@@ -1,7 +1,7 @@
 
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("addTaskForm");
-  if (!form || !window.TaskFlowStore) return;
+  if (!form || !window.TaskFlowAPI) return;
 
   const title = document.getElementById("taskTitle");
   const date = document.getElementById("taskDueDate");
@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.TaskFlowApp?.showToast(message, "error");
   };
 
-  form.addEventListener("submit", event => {
+  form.addEventListener("submit", async event => {
     event.preventDefault();
 
     if (!title.value.trim()) {
@@ -34,16 +34,24 @@ document.addEventListener("DOMContentLoaded", () => {
     const priority =
       document.querySelector('input[name="taskPriority"]:checked')?.value || "medium";
 
-    TaskFlowStore.addTask({
-      title: title.value.trim(),
-      description: document.getElementById("taskDescription")?.value || "",
-      dueDate: date.value,
-      priority
-    });
+    const submitButton = form.querySelector('button[type="submit"]');
+    if (submitButton) submitButton.disabled = true;
 
-    showError("Task created successfully!");
-    setTimeout(() => {
-      window.location.href = "task-list.html";
-    }, 500);
+    try {
+      await TaskFlowAPI.addTask({
+        title: title.value.trim(),
+        description: document.getElementById("taskDescription")?.value || "",
+        dueDate: date.value,
+        priority
+      });
+
+      showError("Task created successfully!");
+      setTimeout(() => {
+        window.location.href = "task-list.html";
+      }, 500);
+    } catch (error) {
+      showError(error.message);
+      if (submitButton) submitButton.disabled = false;
+    }
   });
 });

@@ -1,18 +1,18 @@
 
-document.addEventListener("DOMContentLoaded", () => {
-  if (!window.TaskFlowStore) {
-    console.error("TaskFlowStore is not available.");
+document.addEventListener("DOMContentLoaded", async () => {
+  if (!window.TaskFlowAPI) {
+    console.error("TaskFlowAPI is not available.");
     return;
   }
 
-  let session = {};
+  const session = TaskFlowAPI.getSession() || {};
+
+  let allTasks = [];
 
   try {
-    session = JSON.parse(
-      sessionStorage.getItem("taskflow_session") || "{}"
-    );
+    allTasks = await TaskFlowAPI.getTasks();
   } catch (error) {
-    console.error("Unable to read TaskFlow session:", error);
+    window.TaskFlowApp?.showToast(error.message, "error");
   }
 
   const setText = (id, value) => {
@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // UPDATE DASHBOARD STATISTICS
   const renderStatistics = () => {
-    const stats = TaskFlowStore.getStats();
+    const stats = TaskFlowAPI.computeStats(allTasks);
 
     setText("welcomeUserName", session.name || "User");
 
@@ -77,8 +77,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const selectedPriority = priorityFilter
       ? priorityFilter.value.toLowerCase()
       : "all";
-
-    const allTasks = TaskFlowStore.getTasks();
 
     // FILTER TASKS BY PRIORITY
     const filteredTasks = allTasks.filter(task => {

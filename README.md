@@ -18,3 +18,7 @@ Delete Tasks: Remove tasks that are no longer needed.
 Task Management: Store and manage tasks using a PostgreSQL database.
 
 User-Friendly Interface: Simple and clean design for easy navigation.
+
+
+## Setup
+See `backend/README.md`. Short version: create the DB from `database/schema`, copy `backend/.env.example` to `backend/.env` (set `JWT_SECRET`), run `uvicorn main:app --reload` in `backend/`, then open `Frontend/index.html` with Live Server.

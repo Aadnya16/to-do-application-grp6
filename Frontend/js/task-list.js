@@ -1,7 +1,7 @@
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   const container = document.getElementById("taskListContainer");
-  if (!container || !window.TaskFlowStore) return;
+  if (!container || !window.TaskFlowAPI) return;
 
   const search = document.getElementById("taskSearchInput");
   const badge = document.getElementById("taskCountBadge");
@@ -11,6 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let filter = "all";
   let deleteId = null;
+  let allTasks = [];
 
   const toast = (message, type = "success") => {
     if (window.TaskFlowApp?.showToast) {
@@ -32,7 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function render() {
     const query = (search?.value || "").trim().toLowerCase();
 
-    const tasks = TaskFlowStore.getTasks().filter(task => {
+    const tasks = allTasks.filter(task => {
       const matchesFilter = filter === "all" || task.status === filter;
       const matchesSearch =
         `${task.title} ${task.description || ""}`.toLowerCase().includes(query);
@@ -72,18 +73,18 @@ document.addEventListener("DOMContentLoaded", () => {
       statusButton.textContent =
         task.status === "completed" ? "Reopen" : "Mark complete";
 
-      statusButton.addEventListener("click", () => {
+      statusButton.addEventListener("click", async () => {
         const newStatus =
           task.status === "completed" ? "pending" : "completed";
 
-        const updated = TaskFlowStore.updateTask(task.id, {
-          status: newStatus
-        });
-
-        if (!updated) return toast("Could not update task.", "error");
+        try {
+          await TaskFlowAPI.updateTask(task.id, { status: newStatus });
+        } catch (error) {
+          return toast(error.message, "error");
+        }
 
         toast(newStatus === "completed" ? "Task completed!" : "Task reopened!");
-        render();
+        await load();
       });
 
       const editButton = document.createElement("button");
@@ -127,7 +128,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  editForm?.addEventListener("submit", event => {
+  editForm?.addEventListener("submit", async event => {
     event.preventDefault();
 
     const id = document.getElementById("editTaskId")?.value;
@@ -137,20 +138,22 @@ document.addEventListener("DOMContentLoaded", () => {
       return toast("Task title is required.", "error");
     }
 
-    const updated = TaskFlowStore.updateTask(id, {
-      title,
-      description: document.getElementById("editTaskDesc")?.value || "",
-      dueDate: document.getElementById("editTaskDueDate")?.value || "",
-      priority: (
-        document.getElementById("editTaskPriority")?.value || "medium"
-      ).toLowerCase()
-    });
-
-    if (!updated) return toast("Task update failed.", "error");
+    try {
+      await TaskFlowAPI.updateTask(id, {
+        title,
+        description: document.getElementById("editTaskDesc")?.value || "",
+        dueDate: document.getElementById("editTaskDueDate")?.value || "",
+        priority: (
+          document.getElementById("editTaskPriority")?.value || "medium"
+        ).toLowerCase()
+      });
+    } catch (error) {
+      return toast(error.message, "error");
+    }
 
     closeModal(editModal);
     toast("Task updated!");
-    render();
+    await load();
   });
 
   document.getElementById("closeEditModalBtn")
@@ -163,18 +166,21 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
   document.getElementById("confirmDeleteBtn")
-    ?.addEventListener("click", () => {
+    ?.addEventListener("click", async () => {
       if (!deleteId) return;
 
-      const deleted = TaskFlowStore.deleteTask(deleteId);
+      const id = deleteId;
       deleteId = null;
-
       closeModal(deleteModal);
 
-      if (!deleted) return toast("Delete failed.", "error");
+      try {
+        await TaskFlowAPI.deleteTask(id);
+      } catch (error) {
+        return toast(error.message, "error");
+      }
 
       toast("Task deleted!");
-      render();
+      await load();
     });
 
   search?.addEventListener("input", render);
@@ -192,5 +198,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  render();
+  async function load() {
+    try {
+      allTasks = await TaskFlowAPI.getTasks();
+    } catch (error) {
+      toast(error.message, "error");
+    }
+    render();
+  }
+
+  await load();
 });
