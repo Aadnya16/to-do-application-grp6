@@ -1,0 +1,30 @@
+/* Shared sidebar collapse/expand behavior */
+.app-layout.sidebar-collapsed .sidebar { width: 78px !important; min-width: 78px; }
+.app-layout.sidebar-collapsed .sidebar-logo { position: relative; justify-content: center; padding: 18px 10px !important; }
+.app-layout.sidebar-collapsed .sidebar-logo .logo-text { display: none !important; }
+.app-layout.sidebar-collapsed .sidebar-collapse-btn { display: none !important; }
+.app-layout.sidebar-collapsed .sidebar-logo .logo-icon { cursor: pointer; }
+.app-layout.sidebar-collapsed .sidebar-nav .nav-label { display: none !important; }
+.app-layout.sidebar-collapsed .sidebar-nav .nav-item { justify-content: center !important; padding: 13px 8px !important; }
+.app-layout.sidebar-collapsed .sidebar-nav .nav-item span:not(.nav-icon) { display: none !important; }
+.app-layout.sidebar-collapsed .sidebar-footer { padding: 12px 8px !important; }
+.app-layout.sidebar-collapsed .profile-menu-user,
+.app-layout.sidebar-collapsed .profile-menu-chevron,
+.app-layout.sidebar-collapsed .profile-label,
+.app-layout.sidebar-collapsed .profile-chevron { display: none !important; }
+.app-layout.sidebar-collapsed .profile-menu-trigger,
+.app-layout.sidebar-collapsed .profile-trigger { justify-content: center !important; padding: 6px !important; }
+.app-layout.sidebar-collapsed .profile-menu { left: calc(100% + 8px) !important; right: auto !important; bottom: 0 !important; width: 180px !important; }
+.app-layout.sidebar-collapsed .main-content { margin-left: 78px !important; }
+@media (max-width: 900px) {
+  .app-layout.sidebar-collapsed .sidebar { width: var(--sidebar-w, 260px) !important; min-width: var(--sidebar-w, 260px); }
+  .app-layout.sidebar-collapsed .sidebar-logo .logo-text,
+  .app-layout.sidebar-collapsed .sidebar-nav .nav-label,
+  .app-layout.sidebar-collapsed .sidebar-nav .nav-item span:not(.nav-icon),
+  .app-layout.sidebar-collapsed .profile-menu-user,
+  .app-layout.sidebar-collapsed .profile-menu-chevron,
+  .app-layout.sidebar-collapsed .profile-label,
+  .app-layout.sidebar-collapsed .profile-chevron { display: initial !important; }
+  .app-layout.sidebar-collapsed .sidebar-nav .nav-item { justify-content: flex-start !important; }
+  .app-layout.sidebar-collapsed .main-content { margin-left: 0 !important; }
+}

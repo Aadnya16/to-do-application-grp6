@@ -1,6 +1,6 @@
 /* ============================================================
    TASKFLOW — SHARED STYLESHEET
-   Author  : Vrunda Dilip  (UI/UX Designer)
+   Redesigned by: Shrishti More 
    Purpose : Common variables, layout, components reused across
              all four screens.
    ============================================================ */
@@ -272,6 +272,108 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 }
 .user-name  { font-size: 14px; font-weight: 600; color: var(--text-dark); }
 .user-role  { font-size: 12px; color: var(--text-light); }
+
+/* ---- Sidebar Collapse & Profile Menu ---- */
+
+.sidebar-logo {
+  position: relative;
+}
+
+.sidebar-collapse-btn {
+  margin-left: auto;
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  font-size: 18px;
+  border-radius: 6px;
+  width: 30px;
+  height: 30px;
+}
+
+.sidebar-collapse-btn:hover {
+  background: #f1f5f9;
+}
+
+.profile-menu-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.profile-menu-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  color: inherit;
+}
+
+.profile-menu-trigger:hover {
+  background: #f8fafc;
+}
+
+.profile-menu-user {
+  min-width: 0;
+  flex: 1;
+}
+
+.profile-menu-chevron {
+  color: #94a3b8;
+  transition: transform .15s ease;
+}
+
+.profile-menu-trigger[aria-expanded="true"] .profile-menu-chevron {
+  transform: rotate(180deg);
+}
+
+.profile-menu {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  width: 100%;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(15,23,42,.12);
+  padding: 6px;
+  z-index: 50;
+}
+
+.profile-menu.open {
+  display: block;
+}
+
+.profile-menu a,
+.profile-menu button {
+  display: block;
+  width: 100%;
+  text-decoration: none;
+  text-align: left;
+  padding: 9px 10px;
+  border: 0;
+  background: transparent;
+  color: #475569;
+  font-size: 13px;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.profile-menu a:hover,
+.profile-menu button:hover {
+  background: #f1f5f9;
+}
+
+.profile-menu button.btn-logout-trigger:hover {
+  background: #fff1f2;
+  color: #be123c;
+}
 
 /* ---- Main Content ---- */
 .main-content {

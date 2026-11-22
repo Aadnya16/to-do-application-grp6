@@ -212,7 +212,6 @@
 
   function setupShell() {
     const layout = $("#appLayout");
-    $("#sidebarCollapseBtn")?.addEventListener("click", () => layout.classList.toggle("sidebar-collapsed"));
     $("#hamburgerBtn")?.addEventListener("click", () => {
       $("#sidebar").classList.toggle("open");
       $("#sidebarOverlay").classList.toggle("active");
@@ -231,11 +230,13 @@
       const open = $("#profileTrigger").getAttribute("aria-expanded") === "true";
       $("#profileTrigger").setAttribute("aria-expanded", String(!open));
       $("#profileMenu").hidden = open;
+      $("#profileMenu").classList.toggle("open", !open);
     });
 
     document.addEventListener("click", e => {
       if (!e.target.closest(".profile-menu-wrap")) {
         $("#profileMenu").hidden = true;
+        $("#profileMenu").classList.remove("open");
         $("#profileTrigger")?.setAttribute("aria-expanded", "false");
       }
     });

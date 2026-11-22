@@ -90,6 +90,7 @@
 
   function closeProfileMenu() {
     $('profileMenu').hidden = true;
+    $('profileMenu').classList.remove('open');
     $('profileTrigger').setAttribute('aria-expanded', 'false');
   }
 
@@ -210,6 +211,7 @@
       const isOpen = $('profileTrigger').getAttribute('aria-expanded') === 'true';
       $('profileTrigger').setAttribute('aria-expanded', String(!isOpen));
       $('profileMenu').hidden = isOpen;
+      $('profileMenu').classList.toggle('open', !isOpen);
     });
 
     document.addEventListener('click', event => {
@@ -221,7 +223,6 @@
     $('logoutModalOverlay')?.addEventListener('click', event => { if (event.target === $('logoutModalOverlay')) closeLogoutModal(); });
     $('confirmLogoutBtn')?.addEventListener('click', () => api.logout());
 
-    $('sidebarCollapseBtn')?.addEventListener('click', () => $('appLayout').classList.toggle('sidebar-collapsed'));
     $('hamburgerBtn')?.addEventListener('click', () => { $('sidebar').classList.toggle('open'); $('sidebarOverlay').classList.toggle('active'); });
     $('sidebarOverlay')?.addEventListener('click', () => { $('sidebar').classList.remove('open'); $('sidebarOverlay').classList.remove('active'); });
   }

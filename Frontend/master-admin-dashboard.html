@@ -5,7 +5,7 @@
   <title>TaskFlow — Master Admin</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/master-admin-dashboard.css">
+  <link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/master-admin-dashboard.css"><link rel="stylesheet" href="css/sidebar.css">
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
@@ -67,5 +67,5 @@
 <div class="modal-overlay" id="decisionModal" aria-hidden="true"><div class="modal decision-modal" role="dialog" aria-modal="true" aria-labelledby="decisionTitle"><span class="decision-icon" id="decisionIcon"><i data-lucide="shield-check"></i></span><h3 class="modal-title" id="decisionTitle">Approve administrator?</h3><p class="modal-body" id="decisionBody">This request will be updated.</p><div class="modal-actions"><button class="btn btn-outline btn-sm" type="button" id="decisionCancel">Cancel</button><button class="btn btn-primary btn-sm" type="button" id="decisionConfirm">Confirm</button></div></div></div>
 <div class="modal-overlay" id="logoutModalOverlay" aria-hidden="true"><div class="modal"><h3 class="modal-title">Confirm logout</h3><div class="modal-body">Are you sure you want to end your current session?</div><div class="modal-actions"><button class="btn btn-outline btn-sm" type="button" id="cancelLogoutBtn">Cancel</button><button class="btn btn-danger btn-sm" type="button" id="confirmLogoutBtn">Yes, logout</button></div></div></div>
 <div class="toast-container" id="toastContainer" aria-live="polite"></div>
-<script src="js/api.js"></script><script src="js/master-admin-dashboard.js"></script>
+<script src="js/api.js"></script><script src="js/sidebar.js"></script><script src="js/master-admin-dashboard.js"></script>
 </body></html>

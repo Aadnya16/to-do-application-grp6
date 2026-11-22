@@ -1,6 +1,5 @@
 /* ============================================================
    TASKFLOW — TASK STYLES (ADD TASK & TASK LIST)
-   Author  : Vrunda Dilip (UI/UX Designer)
    Redesigned by : Shrishti More
    Screens : Screen 3 - Add Task Page & Screen 4 - Task List Page
    ============================================================ */
@@ -827,30 +826,7 @@
 .table-action.edit {background:#f8fafc;color:#475569;}
 .table-action.delete {background:#fff1f2;color:#be123c;}
 .completed-table-empty {text-align:center!important;padding:28px!important;color:#94a3b8!important;}
-.sidebar-logo { position:relative; }
-.sidebar-collapse-btn { margin-left:auto; border:0; background:transparent; color:#64748b; cursor:pointer; font-size:18px; border-radius:6px; width:30px;height:30px; }
-.sidebar-collapse-btn:hover {background:#f1f5f9;}
-.profile-menu-wrap {position:relative;width:100%;}
-.profile-menu-trigger {width:100%;display:flex;align-items:center;gap:10px;text-align:left;border:0;background:transparent;padding:8px;border-radius:10px;cursor:pointer;color:inherit;}
-.profile-menu-trigger:hover {background:#f8fafc;}
-.profile-menu-user {min-width:0;flex:1;}
-.profile-menu-chevron {color:#94a3b8;transition:transform .15s ease;}
-.profile-menu-trigger[aria-expanded="true"] .profile-menu-chevron {transform:rotate(180deg);}
-.profile-menu {display:none;position:absolute;bottom:calc(100% + 8px);left:0;width:100%;background:#fff;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 10px 30px rgba(15,23,42,.12);padding:6px;z-index:50;}
-.profile-menu.open {display:block;}
-.profile-menu a,.profile-menu button {display:block;width:100%;text-decoration:none;text-align:left;padding:9px 10px;border:0;background:transparent;color:#475569;font-size:13px;border-radius:7px;cursor:pointer;}
-.profile-menu a:hover,.profile-menu button:hover {background:#f1f5f9;}
-.profile-menu button.btn-logout-trigger:hover {background:#fff1f2;color:#be123c;}
-body.sidebar-collapsed .sidebar {width:78px;min-width:78px;}
-body.sidebar-collapsed .sidebar-logo {justify-content:center;padding:18px 10px;}
-body.sidebar-collapsed .logo-text,body.sidebar-collapsed .sidebar-nav .nav-label,body.sidebar-collapsed .nav-item span:not(.nav-icon),body.sidebar-collapsed .profile-menu-user,body.sidebar-collapsed .profile-menu-chevron {display:none!important;}
-body.sidebar-collapsed .sidebar-collapse-btn {position:absolute;right:7px;top:8px;font-size:14px;width:22px;}
-body.sidebar-collapsed .sidebar-nav .nav-item {justify-content:center;padding:13px 8px;}
-body.sidebar-collapsed .sidebar-footer {padding:12px 8px;}
-body.sidebar-collapsed .profile-menu-trigger {justify-content:center;padding:6px;}
-body.sidebar-collapsed .profile-menu {left:calc(100% + 8px);bottom:0;width:180px;}
-body.sidebar-collapsed .main-content {margin-left:78px;}
-@media(max-width:900px){.sidebar-collapse-btn{display:none;} body.sidebar-collapsed .sidebar{width:var(--sidebar-width,260px);min-width:var(--sidebar-width,260px);} body.sidebar-collapsed .main-content{margin-left:0;} body.sidebar-collapsed .sidebar-logo .logo-text,body.sidebar-collapsed .sidebar-nav .nav-label,body.sidebar-collapsed .nav-item span:not(.nav-icon),body.sidebar-collapsed .profile-menu-user,body.sidebar-collapsed .profile-menu-chevron{display:initial!important;} body.sidebar-collapsed .sidebar-nav .nav-item{justify-content:flex-start;} }
+
 @media(max-width:680px){.date-time-widget{align-items:flex-start;} .date-display{font-size:10px;} .time-display{font-size:14px;}}
 
 /* TaskFlow visual system preview — sharper soft rectangles, balanced spacing */

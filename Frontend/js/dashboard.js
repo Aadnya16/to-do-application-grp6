@@ -45,7 +45,9 @@
     $('profileTrigger')?.addEventListener('click', () => {
       const expanded = $('profileTrigger').getAttribute('aria-expanded') === 'true';
       $('profileTrigger').setAttribute('aria-expanded', String(!expanded));
-      $('profileMenu').hidden = expanded;
+      const menu = $('profileMenu');
+      menu.hidden = expanded;
+      menu.classList.toggle('open', !expanded);
     });
 
     $('profileMenuLink')?.addEventListener('click', () => {
@@ -55,6 +57,7 @@
     document.addEventListener('click', e => {
       if (!e.target.closest('.sidebar-footer')) {
         $('profileMenu').hidden = true;
+        $('profileMenu').classList.remove('open');
         $('profileTrigger').setAttribute('aria-expanded', 'false');
       }
     });
@@ -215,7 +218,6 @@
 
   function setupSidebar() {
     const layout = $('appLayout');
-    $('sidebarCollapseBtn')?.addEventListener('click', () => layout.classList.toggle('sidebar-collapsed'));
     $('hamburgerBtn')?.addEventListener('click', () => {
       $('sidebar').classList.toggle('open');
       $('sidebarOverlay').classList.toggle('active');

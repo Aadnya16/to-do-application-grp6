@@ -104,18 +104,30 @@
         }
 
         // Update sidebar with the currently logged-in account.
-        if (session) {
-            const name = session.name || "User";
-            const initials = getInitials(name);
+            if (session) {
+                const name = session.name || "User";
+                const initials = getInitials(name);
 
-            document.querySelectorAll(".user-name-display").forEach(el => {
-                el.textContent = name;
-            });
+                const roleLabels = {
+                    "user": "TaskFlow User",
+                    "admin": "TaskFlow Admin",
+                    "master-admin": "TaskFlow Master Admin"
+                };
 
-            document.querySelectorAll(".user-avatar-display").forEach(el => {
-                el.textContent = initials;
-            });
-        }
+                const role = roleLabels[session.role] || "User";
+
+                document.querySelectorAll(".user-name-display").forEach(el => {
+                    el.textContent = name;
+                });
+
+                document.querySelectorAll(".user-role-display").forEach(el => {
+                    el.textContent = role;
+                });
+
+                document.querySelectorAll(".user-avatar-display").forEach(el => {
+                    el.textContent = initials;
+                });
+            }
 
         const sidebar = $("#sidebar");
         const overlay = $("#sidebarOverlay");

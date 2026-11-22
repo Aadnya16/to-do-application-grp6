@@ -2,6 +2,7 @@
    TASKFLOW — CENTRALIZED FRONTEND API SERVICE LAYER
    Production-ready API client connecting Frontend to FastAPI backend.
    Handles JWT authentication, requests, error handling, session lifecycle.
+   Authored by: Shrishti More
    ============================================================ */
 
 (() => {

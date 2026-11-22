@@ -161,24 +161,17 @@
   $('#hamburgerBtn')?.addEventListener('click', () => { sidebar?.classList.toggle('open'); overlay?.classList.toggle('active'); });
   overlay?.addEventListener('click', () => { sidebar?.classList.remove('open'); overlay?.classList.remove('active'); });
 
-  const appLayout = $('#appLayout');
-  const collapseBtn = $('#sidebarCollapseBtn');
-  if (localStorage.getItem('taskflow_sidebar_collapsed') === 'true') appLayout?.classList.add('sidebar-collapsed');
-  collapseBtn?.addEventListener('click', () => {
-    appLayout?.classList.toggle('sidebar-collapsed');
-    localStorage.setItem('taskflow_sidebar_collapsed', appLayout?.classList.contains('sidebar-collapsed') ? 'true' : 'false');
-  });
-
   const profileTrigger = $('#profileTrigger');
   const profileMenu = $('#profileMenu');
   profileTrigger?.addEventListener('click', () => {
     const expanded = profileTrigger.getAttribute('aria-expanded') === 'true';
     profileTrigger.setAttribute('aria-expanded', String(!expanded));
-    if (profileMenu) profileMenu.hidden = expanded;
+    if (profileMenu) { profileMenu.hidden = expanded; profileMenu.classList.toggle('open', !expanded); }
   });
   document.addEventListener('click', event => {
     if (profileMenu && !profileMenu.hidden && !event.target.closest('.profile-menu-wrap')) {
       profileMenu.hidden = true;
+      profileMenu.classList.remove('open');
       profileTrigger?.setAttribute('aria-expanded', 'false');
     }
   });

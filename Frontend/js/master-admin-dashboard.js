@@ -238,16 +238,17 @@
       const open = $("profileTrigger").getAttribute("aria-expanded") === "true";
       $("profileTrigger").setAttribute("aria-expanded", String(!open));
       $("profileMenu").hidden = open;
+      $("profileMenu").classList.toggle("open", !open);
     });
 
     document.addEventListener("click", e => {
       if (!e.target.closest(".profile-menu-wrap")) {
         $("profileMenu").hidden = true;
+        $("profileMenu").classList.remove("open");
         $("profileTrigger")?.setAttribute("aria-expanded", "false");
       }
     });
 
-    $("sidebarCollapseBtn")?.addEventListener("click", () => $("appLayout").classList.toggle("sidebar-collapsed"));
     $("hamburgerBtn")?.addEventListener("click", () => {
       $("sidebar").classList.toggle("open");
       $("sidebarOverlay").classList.toggle("active");
@@ -297,6 +298,7 @@
 
     $("logoutTrigger")?.addEventListener("click", () => {
       $("profileMenu").hidden = true;
+      $("profileMenu").classList.remove("open");
       $("profileTrigger")?.setAttribute("aria-expanded", "false");
       $("logoutModalOverlay").classList.add("show");
       $("logoutModalOverlay").setAttribute("aria-hidden", "false");

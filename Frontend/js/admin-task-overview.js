@@ -81,7 +81,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   $('#statusFilter')?.addEventListener('change', render);
   $('#priorityFilter')?.addEventListener('change', render);
 
-  $('#sidebarCollapseBtn')?.addEventListener('click', () => $('#appLayout').classList.toggle('sidebar-collapsed'));
   $('#hamburgerBtn')?.addEventListener('click', () => {
     $('#sidebar').classList.toggle('open');
     $('#sidebarOverlay').classList.toggle('active');
@@ -99,11 +98,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const open = $('#profileTrigger').getAttribute('aria-expanded') === 'true';
     $('#profileTrigger').setAttribute('aria-expanded', String(!open));
     $('#profileMenu').hidden = open;
+    $('#profileMenu').classList.toggle('open', !open);
   });
 
   document.addEventListener('click', e => {
     if (!e.target.closest('.profile-menu-wrap')) {
       $('#profileMenu').hidden = true;
+      $('#profileMenu').classList.remove('open');
       $('#profileTrigger')?.setAttribute('aria-expanded', 'false');
     }
   });
